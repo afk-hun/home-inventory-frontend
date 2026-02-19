@@ -1,0 +1,20 @@
+{
+  "name": "home-inventory-frontend",
+  "version": "0.0.0",
+  "description": "Home inventory application frontend part",
+  "homepage": "https://github.com/afk-hun/home-inventory-frontend#readme",
+  "bugs": {
+    "url": "https://github.com/afk-hun/home-inventory-frontend/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/afk-hun/home-inventory-frontend.git"
+  },
+  "license": "ISC",
+  "author": "Akos Ferenc Kalamar",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}

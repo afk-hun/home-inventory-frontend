@@ -1,4 +1,4 @@
-function App() {
+function Dashboard() {
   return (
     <main className="app">
       <h1>Home Inventory</h1>
@@ -7,4 +7,4 @@ function App() {
   );
 }
 
-export default App;
+export default Dashboard;

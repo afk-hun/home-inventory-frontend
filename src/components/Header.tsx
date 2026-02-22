@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLogin } from "@/contexts/login-context";
+import { useNavigate } from "react-router";
 
 const menuItems = [
 	{ label: "Signup", href: "/signup", needsAuth: false },
@@ -21,10 +22,28 @@ export default function Header() {
 	const [isMobileOpen, setIsMobileOpen] = useState(false);
 
 	const loginContext = useLogin();
+	const navigate = useNavigate();
+	const serverUrl = import.meta.env.VITE_SERVER_URL;
 
 	const visibleMenuItems = menuItems.filter((item) =>
 		item.needsAuth ? loginContext.user : !loginContext.user,
 	);
+
+	const handleLogout = async () => {
+		if (serverUrl && typeof serverUrl === "string") {
+			try {
+				await fetch(`${serverUrl}/auth/logout`, {
+					method: "POST",
+					credentials: "include",
+				});
+			} catch {
+				// noop
+			}
+		}
+
+		loginContext.setUser(null);
+		navigate("/login");
+	};
 
 	return (
 		<header className="border-b bg-background">
@@ -54,17 +73,19 @@ export default function Header() {
 								</NavigationMenuItem>
 							))}
 							<NavigationMenuItem>
-								{loginContext.user !== null && <NavigationMenuLink asChild>
-									<a
-										href={"/login"}
-										className={navigationMenuTriggerStyle()}
-										onClick={() => {
-											loginContext.setUser(null);
-										}}
-									>
-										Logout
-									</a>
-								</NavigationMenuLink>}
+								{loginContext.user !== null && (
+									<NavigationMenuLink asChild>
+										<button
+											className={navigationMenuTriggerStyle()}
+											onClick={async (event) => {
+												event.preventDefault();
+												await handleLogout();
+											}}
+										>
+											Logout
+										</button>
+									</NavigationMenuLink>
+								)}
 							</NavigationMenuItem>
 						</NavigationMenuList>
 					</NavigationMenu>

@@ -59,6 +59,7 @@ export default function Login() {
 
 			const response = await fetch(`${serverUrl}/auth/login`, {
 				method: "POST",
+				credentials: "include",
 				headers: {
 					"Content-Type": "application/json",
 				},
@@ -66,26 +67,59 @@ export default function Login() {
 			});
 
 			if (!response.ok) {
-				const errorData = await response.json();
+				let errorMessage = "Invalid email or password.";
+
+				try {
+					const errorText = await response.text();
+
+					if (errorText) {
+						try {
+							const parsed = JSON.parse(errorText);
+							if (parsed && typeof parsed.message === "string") {
+								errorMessage = parsed.message;
+							} else {
+								errorMessage = errorText;
+							}
+						} catch {
+							errorMessage = errorText;
+						}
+					}
+				} catch {
+					// Ignore body parsing errors and fall back to default errorMessage
+				}
+
+				showResponseAlert("Login Failed", errorMessage, "destructive");
+			}
+
+			const data: unknown = await response.json();
+
+			if (
+				!data ||
+				typeof data !== "object" ||
+				typeof (data as any).userId !== "string"
+			) {
 				showResponseAlert(
 					"Login Failed",
-					errorData.message || "Invalid email or password.",
+					"Received invalid response from the server. Please try again.",
 					"destructive",
 				);
 				return;
 			}
 
-			const data = await response.json();
-			loginContext.setUser({ id: data.userId, token: data.token });
-			
+			const { userId } = data as { userId: string };
+			loginContext.setUser({ id: userId });
+
 			showResponseAlert(
 				"Login Successful",
 				"You are now logged in.",
 				"success",
 			);
+			setEmail("");
 			setPassword("");
 
-			navigate("/dashboard");
+			setTimeout(() => {
+				navigate("/dashboard");
+			}, 1000);
 		} catch (error: any) {
 			const message =
 				error instanceof Error

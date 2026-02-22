@@ -8,6 +8,7 @@ import {
 } from "react-router";
 import Dashboard from "./pages/Dashboard.tsx";
 import Signup from "./pages/Signup.tsx";
+import Header from "./components/Header.tsx";
 
 let router = createBrowserRouter([
   {
@@ -22,6 +23,9 @@ let router = createBrowserRouter([
 
 createRoot(document.getElementById("root")!).render(
 	<StrictMode>
-		<RouterProvider router={router} />
+    <div className="min-h-screen bg-background text-foreground">
+      <Header />
+      <RouterProvider router={router} />
+    </div>
 	</StrictMode>,
 );

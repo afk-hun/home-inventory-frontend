@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import {
 	NavigationMenu,
@@ -9,21 +9,22 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useLogin } from "@/contexts/login-context";
 
 const menuItems = [
 	{ label: "Signup", href: "/signup", needsAuth: false },
 	{ label: "Login", href: "/login", needsAuth: false },
-	{ label: "Logout", href: "/login", needsAuth: true },
-	{ label: "Dashboard", href: "/", needsAuth: true },
+	{ label: "Dashboard", href: "/dashboard", needsAuth: true },
 ];
 
 export default function Header() {
 	const [isMobileOpen, setIsMobileOpen] = useState(false);
-	const [isAuthenticated, setIsAuthenticated] = useState(false); // Replace with actual auth logic
 
-	useEffect(() => {
-		// TODO - Implement actual authentication check
-	})
+	const loginContext = useLogin();
+
+	const visibleMenuItems = menuItems.filter((item) =>
+		item.needsAuth ? loginContext.user : !loginContext.user,
+	);
 
 	return (
 		<header className="border-b bg-background">
@@ -32,21 +33,39 @@ export default function Header() {
 					<div className="flex h-9 w-9 items-center justify-center rounded-md bg-secondary text-sm font-bold text-primary-foreground">
 						🦔
 					</div>
-					<span className="text-lg font-semibold">Home Inventory</span>
+					<span className="text-lg font-semibold">
+						Home Inventory
+					</span>
 				</a>
 
 				<div className="hidden md:block">
 					<NavigationMenu>
 						<NavigationMenuList>
-							{menuItems.map((item) => (
+							{visibleMenuItems.map((item) => (
 								<NavigationMenuItem key={item.label}>
 									<NavigationMenuLink asChild>
-										<a href={item.href} className={navigationMenuTriggerStyle()}>
+										<a
+											href={item.href}
+											className={navigationMenuTriggerStyle()}
+										>
 											{item.label}
 										</a>
 									</NavigationMenuLink>
 								</NavigationMenuItem>
 							))}
+							<NavigationMenuItem>
+								{loginContext.user !== null && <NavigationMenuLink asChild>
+									<a
+										href={"/login"}
+										className={navigationMenuTriggerStyle()}
+										onClick={() => {
+											loginContext.setUser(null);
+										}}
+									>
+										Logout
+									</a>
+								</NavigationMenuLink>}
+							</NavigationMenuItem>
 						</NavigationMenuList>
 					</NavigationMenu>
 				</div>
@@ -62,9 +81,14 @@ export default function Header() {
 				</Button>
 			</div>
 
-			<div className={cn("md:hidden", isMobileOpen ? "block border-t" : "hidden")}>
+			<div
+				className={cn(
+					"md:hidden",
+					isMobileOpen ? "block border-t" : "hidden",
+				)}
+			>
 				<nav className="mx-auto flex w-full max-w-6xl flex-col gap-1 px-4 py-3">
-					{menuItems.map((item) => (
+					{visibleMenuItems.map((item) => (
 						<a
 							key={item.label}
 							href={item.href}

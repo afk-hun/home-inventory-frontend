@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import {
 	Card,
 	CardContent,
@@ -25,60 +26,83 @@ export default function Signup() {
 	const [passwordMismatchError, setPasswordMismatchError] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 
+	const showResponseAlert = (
+		title: string,
+		description: string,
+		type: "success" | "destructive",
+	) => {
+		setPasswordMismatchError(false);
+		setResponseAlert({
+			title,
+			description,
+			state: true,
+			type,
+		});
+	};
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsLoading(true);
+		setResponseAlert((prev) => ({ ...prev, state: false }));
 
 		try {
 			// Add your sign-up logic here
 			if (password !== confirmPassword) {
+				setResponseAlert((prev) => ({ ...prev, state: false }));
 				setPasswordMismatchError(true);
 				return;
 			}
 
-			try {
-				console.log("Attempting to sign up with:", { name, email, password });
-				console.log("Server URL:", import.meta.env.VITE_SERVER_URL);
-				const response = await fetch(
-					`${import.meta.env.VITE_SERVER_URL}/auth/signup`,
-					{
-						method: "PUT",
-						headers: {
-							"Content-Type": "application/json",
-						},
-						body: JSON.stringify({ name, email, password }),
-					},
+			const serverUrl = import.meta.env.VITE_SERVER_URL;
+			if (!serverUrl || typeof serverUrl !== "string") {
+				showResponseAlert(
+					"Configuration Error",
+					"Server URL is not configured. Please set VITE_SERVER_URL and try again.",
+					"destructive",
 				);
-
-				if (!response.ok) {
-					const errorData = await response.json();
-					setResponseAlert({
-						title: "Sign Up Failed",
-						description:
-							errorData.message ||
-							"An error occurred during sign up.",
-						state: true,
-						type: "destructive",	
-					});
-					return;
-				}
-				console.log("Sign up successful:", response.ok, await response.json());
-				setResponseAlert({
-					title: "Sign Up Successful",
-					description:
-						"Your account has been created successfully. You can now log in.",
-					state: true,
-					type: "success",
-				});
-			} catch (error: any) {
-				console.error(error);
-				setResponseAlert({
-					title: "Sign Up Failed",
-					description: error.message,
-					state: true,
-					type: "destructive",
-				});
+				return;
 			}
+
+			const response = await fetch(`${serverUrl}/auth/signup`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ name, email, password }),
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				showResponseAlert(
+					"Sign Up Failed",
+					errorData.message || "An error occurred during sign up.",
+					"destructive",
+				);
+				return;
+			}
+
+			showResponseAlert(
+				"Sign Up Successful",
+				"Your account has been created successfully. You can now log in.",
+				"success",
+			);
+			setName("");
+			setEmail("");
+			setPassword("");
+			setConfirmPassword("");
+		} catch (error: any) {
+			const message =
+				error instanceof Error
+					? error.message
+					: typeof error === "string"
+						? error
+						: "An unexpected error occurred during sign up.";
+			setResponseAlert({
+				title: "Sign Up Failed",
+				description: message,
+				state: true,
+				type: "destructive",
+			});
 		} finally {
 			setIsLoading(false);
 		}
@@ -137,14 +161,15 @@ export default function Signup() {
 								className="h-10"
 								value={email}
 								onChange={(e) => setEmail(e.target.value)}
+								pattern="^[^@\s]+@[^@\s]+\.[^@\s]+$"
+								title="Please enter a valid email address in the format name@example.com."
 								required
 							/>
 						</div>
 						<div className="space-y-2">
 							<Label htmlFor="password">Password</Label>
-							<Input
+							<PasswordInput
 								id="password"
-								type="password"
 								placeholder="••••••••"
 								autoComplete="new-password"
 								className="h-10"
@@ -162,12 +187,12 @@ export default function Signup() {
 							<Label htmlFor="confirm-password">
 								Confirm Password
 							</Label>
-							<Input
+							<PasswordInput
 								id="confirm-password"
-								type="password"
 								placeholder="••••••••"
 								autoComplete="new-password"
 								className="h-10"
+								showStrengthBadge={false}
 								value={confirmPassword}
 								onChange={(e) => {
 									setConfirmPassword(e.target.value);

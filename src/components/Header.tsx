@@ -26,7 +26,7 @@ export default function Header() {
 	const serverUrl = import.meta.env.VITE_SERVER_URL;
 
 	const visibleMenuItems = menuItems.filter((item) =>
-		item.needsAuth ? loginContext.user : !loginContext.user,
+		item.needsAuth ? loginContext.isLoggedIn : !loginContext.isLoggedIn,
 	);
 
 	const handleLogout = async () => {
@@ -41,7 +41,7 @@ export default function Header() {
 			}
 		}
 
-		loginContext.setUser(null);
+		loginContext.setIsLoggedIn(false);
 		navigate("/login");
 	};
 
@@ -73,7 +73,7 @@ export default function Header() {
 								</NavigationMenuItem>
 							))}
 							<NavigationMenuItem>
-								{loginContext.user !== null && (
+								{loginContext.isLoggedIn && (
 									<NavigationMenuLink asChild>
 										<button
 											className={navigationMenuTriggerStyle()}

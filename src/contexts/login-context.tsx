@@ -1,27 +1,23 @@
 import React from "react";
 
-type User = {
-	id: string;
-} | null;
-
-type LoginContextType = {
-	user: User;
-	setUser: (user: User | null) => void;
+type LoginContextType = {	
+	isLoggedIn: boolean;
+	setIsLoggedIn: (isLoggedIn: boolean) => void;
 };
 
 const LoginContext = React.createContext<LoginContextType>({
-	user: null,
-	setUser: (_user: { id: string } | null) => {},
+	isLoggedIn: false,
+	setIsLoggedIn: (isLoggedIn: boolean) => {},
 });
 
 export const LoginProvider: React.FC<{ children: React.ReactNode }> = ({
 	children,
 }) => {
-	const [user, setUser] = React.useState<{ id: string } | null>(null);
+	const [isLoggedIn, setIsLoggedIn] = React.useState<boolean>(false);
 
 	return (
 		<LoginContext.Provider
-			value={{ user, setUser }}
+			value={{ isLoggedIn, setIsLoggedIn }}
 		>
 			{children}
 		</LoginContext.Provider>

@@ -89,6 +89,7 @@ export default function Login() {
 				}
 
 				showResponseAlert("Login Failed", errorMessage, "destructive");
+				return;
 			}
 
 			const data: unknown = await response.json();
@@ -106,8 +107,7 @@ export default function Login() {
 				return;
 			}
 
-			const { userId } = data as { userId: string };
-			loginContext.setUser({ id: userId });
+			loginContext.setIsLoggedIn(true);
 
 			showResponseAlert(
 				"Login Successful",
@@ -127,6 +127,8 @@ export default function Login() {
 					: typeof error === "string"
 						? error
 						: "An unexpected error occurred during login.";
+
+			console.error("Login error:", error, message);
 			showResponseAlert("Login Failed", message, "destructive");
 		} finally {
 			setIsLoading(false);

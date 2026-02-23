@@ -9,8 +9,9 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ensureCsrfToken, getCsrfHeaders } from "@/lib/csrf";
 import { useLogin } from "@/contexts/login-context";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 const menuItems = [
 	{ label: "Signup", href: "/signup", needsAuth: false },
@@ -32,9 +33,13 @@ export default function Header() {
 	const handleLogout = async () => {
 		if (serverUrl && typeof serverUrl === "string") {
 			try {
+				await ensureCsrfToken(serverUrl);
 				await fetch(`${serverUrl}/auth/logout`, {
 					method: "POST",
 					credentials: "include",
+					headers: {
+						...getCsrfHeaders(),
+					},
 				});
 			} catch {
 				// noop
@@ -48,14 +53,14 @@ export default function Header() {
 	return (
 		<header className="border-b bg-background">
 			<div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4">
-				<a href="/" className="flex items-center gap-3">
+				<Link to="/" className="flex items-center gap-3">
 					<div className="flex h-9 w-9 items-center justify-center rounded-md bg-secondary text-sm font-bold text-primary-foreground">
 						🦔
 					</div>
 					<span className="text-lg font-semibold">
 						Home Inventory
 					</span>
-				</a>
+				</Link>
 
 				<div className="hidden md:block">
 					<NavigationMenu>
@@ -63,12 +68,12 @@ export default function Header() {
 							{visibleMenuItems.map((item) => (
 								<NavigationMenuItem key={item.label}>
 									<NavigationMenuLink asChild>
-										<a
-											href={item.href}
+										<Link
+											to={item.href}
 											className={navigationMenuTriggerStyle()}
 										>
 											{item.label}
-										</a>
+										</Link>
 									</NavigationMenuLink>
 								</NavigationMenuItem>
 							))}
@@ -110,15 +115,26 @@ export default function Header() {
 			>
 				<nav className="mx-auto flex w-full max-w-6xl flex-col gap-1 px-4 py-3">
 					{visibleMenuItems.map((item) => (
-						<a
+						<Link
 							key={item.label}
-							href={item.href}
+							to={item.href}
 							className="rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
 							onClick={() => setIsMobileOpen(false)}
 						>
 							{item.label}
-						</a>
+						</Link>
 					))}
+					{loginContext.isLoggedIn && (
+						<button
+							className={navigationMenuTriggerStyle()}
+							onClick={async (event) => {
+								event.preventDefault();
+								await handleLogout();
+							}}
+						>
+							Logout
+						</button>
+					)}
 				</nav>
 			</div>
 		</header>

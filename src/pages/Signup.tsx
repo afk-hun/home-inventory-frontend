@@ -11,6 +11,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ensureCsrfToken, getCsrfHeaders } from "@/lib/csrf";
 
 export default function Signup() {
 	const [name, setName] = useState("");
@@ -63,10 +64,14 @@ export default function Signup() {
 				return;
 			}
 
+			await ensureCsrfToken(serverUrl);
+
 			const response = await fetch(`${serverUrl}/auth/signup`, {
 				method: "POST",
+				credentials: "include",
 				headers: {
 					"Content-Type": "application/json",
+					...getCsrfHeaders(),
 				},
 				body: JSON.stringify({ name, email, password }),
 			});

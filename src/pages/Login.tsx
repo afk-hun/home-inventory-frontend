@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,11 +11,13 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ensureCsrfToken, getCsrfHeaders } from "@/lib/csrf";
 import { useLogin } from "@/contexts/login-context";
 import { useNavigate } from "react-router";
 
 export default function Login() {
 	const [email, setEmail] = useState("");
+	const [isLoggedIn, setIsLoggedIn] = useState(false);
 	const [password, setPassword] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [responseAlert, setResponseAlert] = useState({
@@ -41,6 +43,17 @@ export default function Login() {
 		});
 	};
 
+	useEffect(() => {
+		if (isLoggedIn) {
+			const timer = setTimeout(() => {
+				navigate("/dashboard");
+				setIsLoggedIn(false); // Reset local state after navigating
+			}, 1000);
+
+			return () => clearTimeout(timer);
+		}
+	}, [isLoggedIn]);
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsLoading(true);
@@ -57,11 +70,14 @@ export default function Login() {
 				return;
 			}
 
+			await ensureCsrfToken(serverUrl);
+
 			const response = await fetch(`${serverUrl}/auth/login`, {
 				method: "POST",
 				credentials: "include",
 				headers: {
 					"Content-Type": "application/json",
+					...getCsrfHeaders(),
 				},
 				body: JSON.stringify({ email, password }),
 			});
@@ -93,7 +109,7 @@ export default function Login() {
 			}
 
 			const data: unknown = await response.json();
-
+			// TODO store user data if it is necessary in the future. For now we just check if the response is valid and log the user in
 			if (
 				!data ||
 				typeof data !== "object" ||
@@ -117,9 +133,7 @@ export default function Login() {
 			setEmail("");
 			setPassword("");
 
-			setTimeout(() => {
-				navigate("/dashboard");
-			}, 1000);
+			setIsLoggedIn(true);
 		} catch (error: any) {
 			const message =
 				error instanceof Error

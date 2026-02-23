@@ -178,7 +178,7 @@ export default function Login() {
 								className="h-10"
 								value={email}
 								onChange={(e) => setEmail(e.target.value)}
-								pattern="^[^@\s]+@[^@\s]+\.[^@\s]+$"
+								pattern="^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"  
 								title="Please enter a valid email address in the format name@example.com."
 								required
 							/>

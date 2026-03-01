@@ -12,6 +12,7 @@ import Signup from "./pages/Signup.tsx";
 import Login from "./pages/Login.tsx";
 import Header from "./components/Header.tsx";
 import { LoginProvider } from "./contexts/login-context.tsx";
+import Welcome from "./pages/Welcome.tsx";
 
 function RootLayout() {
   return (
@@ -29,7 +30,7 @@ let router = createBrowserRouter([
     children: [
       {
         index: true,
-        Component: Dashboard,
+        Component: Welcome,
       },
       {
         path: "dashboard",

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ensureCsrfToken, getCsrfHeaders } from "@/lib/csrf";
 import { useLogin } from "@/contexts/login-context";
-import { Link, useNavigate } from "react-router";
+import { Link, NavLink, useNavigate } from "react-router";
 
 const menuItems = [
 	{ label: "Signup", href: "/signup", needsAuth: false },
@@ -53,7 +53,7 @@ export default function Header() {
 	return (
 		<header className="border-b bg-background">
 			<div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4">
-				<Link to="/" className="flex items-center gap-3">
+				<Link to={loginContext.isLoggedIn ? "/dashboard" : "/"} className="flex items-center gap-3">
 					<div className="flex h-9 w-9 items-center justify-center rounded-md bg-secondary text-sm font-bold text-primary-foreground">
 						🦔
 					</div>
@@ -68,12 +68,16 @@ export default function Header() {
 							{visibleMenuItems.map((item) => (
 								<NavigationMenuItem key={item.label}>
 									<NavigationMenuLink asChild>
-										<Link
+										<NavLink
 											to={item.href}
-											className={navigationMenuTriggerStyle()}
+											end
+											className={cn(
+												navigationMenuTriggerStyle(),
+												"text-foreground/70 aria-[current=page]:bg-accent aria-[current=page]:text-accent-foreground",
+											)}
 										>
 											{item.label}
-										</Link>
+										</NavLink>
 									</NavigationMenuLink>
 								</NavigationMenuItem>
 							))}
@@ -115,14 +119,21 @@ export default function Header() {
 			>
 				<nav className="mx-auto flex w-full max-w-6xl flex-col gap-1 px-4 py-3">
 					{visibleMenuItems.map((item) => (
-						<Link
+						<NavLink
 							key={item.label}
 							to={item.href}
-							className="rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+							end
+							className={({ isActive }) =>
+								cn(
+									"rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+									isActive &&
+										"bg-accent text-accent-foreground",
+								)
+							}
 							onClick={() => setIsMobileOpen(false)}
 						>
 							{item.label}
-						</Link>
+						</NavLink>
 					))}
 					{loginContext.isLoggedIn && (
 						<button

@@ -4,6 +4,7 @@ import "./index.css";
 
 import {
   createBrowserRouter,
+  Navigate,
   Outlet,
   RouterProvider,
 } from "react-router";
@@ -11,8 +12,18 @@ import Dashboard from "./pages/Dashboard.tsx";
 import Signup from "./pages/Signup.tsx";
 import Login from "./pages/Login.tsx";
 import Header from "./components/Header.tsx";
-import { LoginProvider } from "./contexts/login-context.tsx";
+import { LoginProvider, useLogin } from "./contexts/login-context.tsx";
 import Welcome from "./pages/Welcome.tsx";
+
+function IndexRoute() {
+  const { isLoggedIn } = useLogin();
+
+  if (isLoggedIn) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <Welcome />;
+}
 
 function RootLayout() {
   return (
@@ -30,7 +41,7 @@ let router = createBrowserRouter([
     children: [
       {
         index: true,
-        Component: Welcome,
+		Component: IndexRoute,
       },
       {
         path: "dashboard",

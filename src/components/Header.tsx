@@ -17,6 +17,7 @@ const menuItems = [
 	{ label: "Signup", href: "/signup", needsAuth: false },
 	{ label: "Login", href: "/login", needsAuth: false },
 	{ label: "Dashboard", href: "/dashboard", needsAuth: true },
+	{ label: "Settings", href: "/settings", needsAuth: true },
 ];
 
 export default function Header() {

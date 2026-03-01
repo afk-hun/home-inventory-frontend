@@ -14,6 +14,7 @@ import Login from "./pages/Login.tsx";
 import Header from "./components/Header.tsx";
 import { LoginProvider, useLogin } from "./contexts/login-context.tsx";
 import Welcome from "./pages/Welcome.tsx";
+import Settings from "./pages/Settings.tsx";
 
 function IndexRoute() {
   const { isLoggedIn } = useLogin();
@@ -55,6 +56,10 @@ let router = createBrowserRouter([
         path: "login",
         Component: Login,
       },
+      {
+        path: "/settings",
+        Component: Settings,
+      }
     ],
   },
 ]);

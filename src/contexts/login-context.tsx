@@ -15,8 +15,6 @@ const LoginContext = React.createContext<LoginContextType>({
 export const LoginProvider: React.FC<{ children: React.ReactNode }> = ({
 	children,
 }) => {
-	// const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-
 	const [isLoggedIn, setIsLoggedIn] = React.useState<boolean>(() => {
 		if (typeof window === "undefined") {
 			return false;
@@ -27,11 +25,31 @@ export const LoginProvider: React.FC<{ children: React.ReactNode }> = ({
 			if (stored === null) {
 				return false;
 			}
+
 			return stored === "true";
 		} catch {
 			return false;
 		}
 	});
+
+	React.useEffect(() => {
+		if (typeof window === "undefined") {
+			return;
+		}
+
+		try {
+			const stored = window.localStorage.getItem("isLoggedIn");
+			if (stored === "true") {
+				window.cookieStore.get("user_id").then((cookie) => {
+					if (!cookie) {
+						setIsLoggedIn(false);
+					}
+				});
+			}
+		} catch {
+			// Ignore cookie errors
+		}
+	}, [isLoggedIn, setIsLoggedIn]);
 
 	React.useEffect(() => {
 		if (typeof window === "undefined") {
@@ -46,7 +64,7 @@ export const LoginProvider: React.FC<{ children: React.ReactNode }> = ({
 		} catch {
 			// Ignore storage errors (e.g., quota exceeded or disabled storage)
 		}
-	}, [isLoggedIn]);
+	}, [isLoggedIn, setIsLoggedIn]);
 
 	return (
 		<LoginContext.Provider value={{ isLoggedIn, setIsLoggedIn }}>

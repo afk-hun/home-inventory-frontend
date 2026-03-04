@@ -1,89 +1,75 @@
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
+import {
+	createHousehold,
+	fetchHouseholds,
+	removeHousehold,
+	renameHousehold,
+} from "@/api/household";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-type Household = {
-	id: string;
-	name: string;
-	members: string[];
-	inviteEmail: string;
-};
-
-const initialHouseholds: Household[] = [
-	{
-		id: "household-1",
-		name: "Main Household",
-		members: ["owner@example.com", "partner@example.com"],
-		inviteEmail: "",
-	},
-];
-
-const createHousehold = (index: number): Household => ({
-	id: `household-${Date.now()}-${index}`,
-	name: `New Household ${index}`,
-	members: [],
-	inviteEmail: "",
-});
-
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { useHousehold } from "@/contexts/household-context";
 
 const HouseholdSettingsSection = () => {
-	const [households, setHouseholds] = useState<Household[]>(initialHouseholds);
+	const {
+		households,
+		setHouseholds,
+		addHousehold,
+		updateHousehold,
+		deleteHousehold,
+	} = useHousehold();
 
-	const updateHousehold = (
-		householdId: string,
-		updater: (household: Household) => Household,
-	) => {
-		setHouseholds((prev) =>
-			prev.map((household) =>
-				household.id === householdId ? updater(household) : household,
-			),
-		);
-	};
+	const [newHouseholdName, setNewHouseholdName] = useState('');
 
-	const handleAddHousehold = () => {
-		setHouseholds((prev) => [
-			...prev,
-			createHousehold(prev.length + 1),
-		]);
+	useEffect(() => {
+		fetchHouseholds()
+			.then((households) => {
+				setHouseholds(households);
+				console.log("Fetched households:", households);
+			})
+			.catch((err) => {
+				console.error("Error fetching households:", err);
+			});
+	}, []);
+
+	const handleAddHousehold = (e: React.SubmitEvent<HTMLFormElement>) => {
+		e.preventDefault();
+
+		if (newHouseholdName.trim() === "") return;	
+
+		createHousehold(newHouseholdName)
+			.then((household) => {
+				addHousehold(household);
+				setNewHouseholdName("");
+			})
+			.catch((err) => {
+				console.error("Error adding household:", err);
+			});
 	};
 
 	const handleDeleteHousehold = (householdId: string) => {
-		setHouseholds((prev) => prev.filter((household) => household.id !== householdId));
+		console.log("Deleting household with ID:", householdId);
+		removeHousehold(householdId)
+			.then(() => {
+				deleteHousehold(householdId);
+			})
+			.catch((err) => {
+				console.error("Error deleting household:", err);
+			});
 	};
 
-	const handleInviteMember = (householdId: string) => {
-		const household = households.find((item) => item.id === householdId);
-		if (!household) {
-			return;
-		}
-
-		const trimmedEmail = household.inviteEmail.trim().toLowerCase();
-		if (!emailPattern.test(trimmedEmail)) {
-			return;
-		}
-
-		if (household.members.includes(trimmedEmail)) {
-			updateHousehold(householdId, (item) => ({ ...item, inviteEmail: "" }));
-			return;
-		}
-
-		updateHousehold(householdId, (item) => ({
-			...item,
-			members: [...item.members, trimmedEmail],
-			inviteEmail: "",
-		}));
-	};
-
-	const handleRemoveMember = (householdId: string, memberEmail: string) => {
-		updateHousehold(householdId, (household) => ({
-			...household,
-			members: household.members.filter((member) => member !== memberEmail),
-		}));
-	};
+	const updateHouseholdName = (householdId: string, newName: string) => {
+		renameHousehold(householdId, newName).then(() => {
+			// updateHousehold(householdId, (household) => ({
+			// 	...household,
+			// 	name: updatedHousehold.name,
+			// }));
+		}).catch((err) => {
+			console.error("Error renaming household:", err);
+		});
+		
+	}
 
 	return (
 		<div className="space-y-4">
@@ -94,9 +80,24 @@ const HouseholdSettingsSection = () => {
 						Manage multiple households and members.
 					</p>
 				</div>
-				<Button type="button" variant="outline" onClick={handleAddHousehold}>
-					Add household
-				</Button>
+				<form className="flex gap-3" onSubmit={handleAddHousehold}>
+					<Input
+						type="text"
+						name="householdName"
+						id="householdName"
+						placeholder="New household name"
+						className="mr-2"
+						value={newHouseholdName}
+						onChange={(e) => setNewHouseholdName(e.target.value)}
+					/>
+					<Button
+						type="submit"
+						variant="outline"
+						disabled={newHouseholdName.trim() === ""}
+					>
+						Add household
+					</Button>
+				</form>
 			</div>
 
 			{households.length === 0 && (
@@ -106,15 +107,19 @@ const HouseholdSettingsSection = () => {
 			)}
 
 			{households.map((household) => (
-				<Card key={household.id} className="gap-4 py-4">
+				<Card key={household._id} className="gap-4 py-4">
 					<CardHeader className="px-4">
 						<div className="flex flex-wrap items-center justify-between gap-3">
-							<CardTitle className="text-base">{household.name}</CardTitle>
+							<CardTitle className="text-base">
+								{household.name}
+							</CardTitle>
 							<Button
 								type="button"
 								variant="destructive"
 								size="sm"
-								onClick={() => handleDeleteHousehold(household.id)}
+								onClick={() =>
+									handleDeleteHousehold(household._id)
+								}
 							>
 								Delete household
 							</Button>
@@ -122,39 +127,52 @@ const HouseholdSettingsSection = () => {
 					</CardHeader>
 					<CardContent className="space-y-4 px-4">
 						<div className="space-y-2">
-							<Label htmlFor={`household-name-${household.id}`}>Household name</Label>
+							<Label htmlFor={`household-name-${household._id}`} >
+								Household name
+							</Label>
 							<Input
-								id={`household-name-${household.id}`}
+								id={`household-name-${household._id}`}
 								value={household.name}
 								onChange={(event) =>
-									updateHousehold(household.id, (item) => ({
+									updateHousehold(household._id, (item) => ({
 										...item,
 										name: event.target.value,
 									}))
 								}
+								onBlur={(e) => updateHouseholdName(household._id, e.currentTarget.value)}
 								placeholder="Household name"
 							/>
+							
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor={`invite-member-${household.id}`}>Invite user by email</Label>
+							<Label htmlFor={`invite-member-${household._id}`}>
+								Invite user by email
+							</Label>
 							<div className="flex flex-col gap-2 sm:flex-row">
 								<Input
-									id={`invite-member-${household.id}`}
+									id={`invite-member-${household._id}`}
 									type="email"
-									value={household.inviteEmail}
+									// value={household.inviteEmail}
 									onChange={(event) =>
-										updateHousehold(household.id, (item) => ({
-											...item,
-											inviteEmail: event.target.value,
-										}))
+										updateHousehold(
+											household._id,
+											(item) => ({
+												...item,
+												inviteEmail: event.target.value,
+											}),
+										)
 									}
 									placeholder="new-member@example.com"
 								/>
 								<Button
+									disabled
 									type="button"
 									variant="secondary"
-									onClick={() => handleInviteMember(household.id)}
+									onClick={
+										() => {}
+										// handleInviteMember(household.id)
+									}
 								>
 									Invite
 								</Button>
@@ -164,21 +182,30 @@ const HouseholdSettingsSection = () => {
 						<div className="space-y-2">
 							<Label>Members</Label>
 							{household.members.length === 0 ? (
-								<p className="text-muted-foreground text-sm">No invited members yet.</p>
+								<p className="text-muted-foreground text-sm">
+									No invited members yet.
+								</p>
 							) : (
 								<ul className="space-y-2">
-									{household.members.map((memberEmail) => (
+									{household.members.map((member) => (
 										<li
-											key={`${household.id}-${memberEmail}`}
+											key={`${household._id}-${member._id}`}
 											className="flex items-center justify-between gap-3 rounded-md border p-2"
 										>
-											<span className="text-sm">{memberEmail}</span>
+											<span className="text-sm">
+												{member.name} ({member.email})
+											</span>
 											<Button
+												disabled
 												type="button"
 												variant="outline"
 												size="sm"
-												onClick={() =>
-													handleRemoveMember(household.id, memberEmail)
+												onClick={
+													() => {}
+													// handleRemoveMember(
+													// 	household.id,
+													// 	memberEmail,
+													// )
 												}
 											>
 												Delete user

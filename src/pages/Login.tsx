@@ -14,6 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ensureCsrfToken, getCsrfHeaders } from "@/lib/csrf";
 import { useLogin } from "@/contexts/login-context";
 import { useNavigate } from "react-router";
+import { SERVER_URL } from "@/utils/constAndTypes";
 
 export default function Login() {
 	const [email, setEmail] = useState("");
@@ -60,8 +61,8 @@ export default function Login() {
 		setResponseAlert((prev) => ({ ...prev, state: false }));
 
 		try {
-			const serverUrl = import.meta.env.VITE_SERVER_URL;
-			if (!serverUrl || typeof serverUrl !== "string") {
+			// const serverUrl = import.meta.env.VITE_SERVER_URL;
+			if (!SERVER_URL || typeof SERVER_URL !== "string") {
 				showResponseAlert(
 					"Configuration Error",
 					"Server URL is not configured. Please set VITE_SERVER_URL and try again.",
@@ -70,9 +71,9 @@ export default function Login() {
 				return;
 			}
 
-			await ensureCsrfToken(serverUrl);
+			await ensureCsrfToken(SERVER_URL);
 
-			const response = await fetch(`${serverUrl}/auth/login`, {
+			const response = await fetch(`${SERVER_URL}/auth/login`, {
 				method: "POST",
 				credentials: "include",
 				headers: {
@@ -108,20 +109,20 @@ export default function Login() {
 				return;
 			}
 
-			const data: unknown = await response.json();
+			await response.json();
 			// TODO store user data if it is necessary in the future. For now we just check if the response is valid and log the user in
-			if (
-				!data ||
-				typeof data !== "object" ||
-				typeof (data as any).userId !== "string"
-			) {
-				showResponseAlert(
-					"Login Failed",
-					"Received invalid response from the server. Please try again.",
-					"destructive",
-				);
-				return;
-			}
+			// if (
+			// 	!data ||
+			// 	typeof data !== "object" ||
+			// 	typeof (data as any).userId !== "string"
+			// ) {
+			// 	showResponseAlert(
+			// 		"Login Failed",
+			// 		"Received invalid response from the server. Please try again.",
+			// 		"destructive",
+			// 	);
+			// 	return;
+			// }
 
 			loginContext.setIsLoggedIn(true);
 

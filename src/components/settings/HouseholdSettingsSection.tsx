@@ -20,7 +20,7 @@ const HouseholdSettingsSection = () => {
 		deleteHousehold,
 	} = useHousehold();
 
-	const [newHouseholdName, setNewHouseholdName] = useState('');
+	const [newHouseholdName, setNewHouseholdName] = useState("");
 
 	useEffect(() => {
 		fetchHouseholds()
@@ -33,10 +33,10 @@ const HouseholdSettingsSection = () => {
 			});
 	}, []);
 
-	const handleAddHousehold = (e: React.SubmitEvent<HTMLFormElement>) => {
+	const handleAddHousehold = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
-		if (newHouseholdName.trim() === "") return;	
+		if (newHouseholdName.trim() === "") return;
 
 		createHousehold(newHouseholdName)
 			.then((household) => {
@@ -49,7 +49,6 @@ const HouseholdSettingsSection = () => {
 	};
 
 	const handleDeleteHousehold = (householdId: string) => {
-		console.log("Deleting household with ID:", householdId);
 		removeHousehold(householdId)
 			.then(() => {
 				deleteHousehold(householdId);
@@ -60,16 +59,24 @@ const HouseholdSettingsSection = () => {
 	};
 
 	const updateHouseholdName = (householdId: string, newName: string) => {
-		renameHousehold(householdId, newName).then(() => {
-			// updateHousehold(householdId, (household) => ({
-			// 	...household,
-			// 	name: updatedHousehold.name,
-			// }));
-		}).catch((err) => {
-			console.error("Error renaming household:", err);
-		});
-		
-	}
+		renameHousehold(householdId, newName)
+			.then(() => {
+				// nothing happens here
+			})
+			.catch((err) => {
+				console.error("Error renaming household:", err);
+				fetchHouseholds()
+					.then((households) => {
+						setHouseholds(households);
+					})
+					.catch((refetchErr) => {
+						console.error(
+							"Error refetching households after failed rename:",
+							refetchErr,
+						);
+					});
+			});
+	};
 
 	return (
 		<div className="space-y-4">
@@ -127,7 +134,7 @@ const HouseholdSettingsSection = () => {
 					</CardHeader>
 					<CardContent className="space-y-4 px-4">
 						<div className="space-y-2">
-							<Label htmlFor={`household-name-${household._id}`} >
+							<Label htmlFor={`household-name-${household._id}`}>
 								Household name
 							</Label>
 							<Input
@@ -139,10 +146,14 @@ const HouseholdSettingsSection = () => {
 										name: event.target.value,
 									}))
 								}
-								onBlur={(e) => updateHouseholdName(household._id, e.currentTarget.value)}
+								onBlur={(e) =>
+									updateHouseholdName(
+										household._id,
+										e.currentTarget.value,
+									)
+								}
 								placeholder="Household name"
 							/>
-							
 						</div>
 
 						<div className="space-y-2">

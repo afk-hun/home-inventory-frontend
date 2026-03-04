@@ -109,7 +109,7 @@ export default function Login() {
 				return;
 			}
 
-			await response.json();
+			//await response.json();
 			// TODO store user data if it is necessary in the future. For now we just check if the response is valid and log the user in
 			// if (
 			// 	!data ||

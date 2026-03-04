@@ -58,7 +58,7 @@ let router = createBrowserRouter([
 				Component: Login,
 			},
 			{
-				path: "/settings",
+				path: "settings",
 				Component: Settings,
 			},
 		],

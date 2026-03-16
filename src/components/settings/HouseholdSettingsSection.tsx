@@ -26,7 +26,6 @@ const HouseholdSettingsSection = () => {
 		fetchHouseholds()
 			.then((households) => {
 				setHouseholds(households);
-				console.log("Fetched households:", households);
 			})
 			.catch((err) => {
 				console.error("Error fetching households:", err);

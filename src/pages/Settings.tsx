@@ -24,16 +24,28 @@ const sections = [
 		component: <HouseholdSettingsSection />, 
 	},
 	{
-		key: "shelf",
-		title: "Shelf",
-		description: "Edit shelf defaults.",
-		component: <>Shelf</>
-	},
-	{
 		key: "items",
 		title: "Items",
 		description: "Set item defaults.",
 		component: <>Items</>
+	},
+	{
+		key: "itemTypes",
+		title: "Item Types",
+		description: "Set item type defaults.",
+		component: <>Item Types</>
+	},
+	{
+		key: "shelfTypes",
+		title: "Shelf Types",
+		description: "Set shelf type defaults.",
+		component: <>Shelf Types</>
+	},
+	{
+		key: "shelfPlaces",
+		title: "Shelf Places",
+		description: "Set shelf place defaults.",
+		component: <>Shelf Places</>
 	},
 ] as const;
 

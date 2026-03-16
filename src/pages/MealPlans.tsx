@@ -1,27 +1,12 @@
-import { fetchHouseholds } from "@/api/household";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useHousehold } from "@/contexts/household-context";
-import { useEffect } from "react";
 
-function Dashboard() {
-	const { setHouseholds } = useHousehold();
-
-	useEffect(() => {
-		fetchHouseholds()
-			.then((households) => {
-				setHouseholds(households);
-			})
-			.catch((err) => {
-				console.error("Error fetching households:", err);
-			});
-	}, []);
-
+const MealPlans = () => {
 	return (
 		<div className="mx-auto w-full max-w-6xl px-4 py-8 md:py-10">
 			<div className="mb-6 space-y-1">
-				<h1 className="text-2xl font-semibold">Dashboard</h1>
+				<h1 className="text-2xl font-semibold">Meal Plans</h1>
 				<p className="text-muted-foreground text-sm">
-					Overview of your households and meal plans.
+					Plan your weekly meals and track ingredients.
 				</p>
 			</div>
 			<Card className="border-border/60">
@@ -37,6 +22,6 @@ function Dashboard() {
 			</Card>
 		</div>
 	);
-}
+};
 
-export default Dashboard;
+export default MealPlans;

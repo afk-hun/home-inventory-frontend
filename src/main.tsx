@@ -11,11 +11,17 @@ import {
 import Dashboard from "./pages/Dashboard.tsx";
 import Signup from "./pages/Signup.tsx";
 import Login from "./pages/Login.tsx";
-import Header from "./components/Header.tsx";
 import { LoginProvider, useLogin } from "./contexts/login-context.tsx";
 import Welcome from "./pages/Welcome.tsx";
 import Settings from "./pages/Settings.tsx";
+import Shelves from "./pages/Shelves.tsx";
+import Shops from "./pages/Shops.tsx";
+import ShoppingLists from "./pages/ShoppingLists.tsx";
+import Recipes from "./pages/Recipes.tsx";
+import MealPlans from "./pages/MealPlans.tsx";
 import { HouseholdProvider } from "./contexts/household-context.tsx";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "./components/ui/sidebar.tsx";
+import { AppSidebar } from "./components/AppSidebar.tsx";
 
 function IndexRoute() {
 	const { isLoggedIn } = useLogin();
@@ -28,11 +34,20 @@ function IndexRoute() {
 }
 
 function RootLayout() {
+	const { isLoggedIn } = useLogin();
+
 	return (
-		<div className="min-h-screen bg-background text-foreground">
-			<Header />
-			<Outlet />
-		</div>
+		<SidebarProvider>
+			{isLoggedIn && <AppSidebar />}
+			<SidebarInset className="bg-background text-foreground">
+				{isLoggedIn && (
+					<div className="p-2">
+						<SidebarTrigger />
+					</div>
+				)}
+				<Outlet />
+			</SidebarInset>
+		</SidebarProvider>
 	);
 }
 
@@ -60,6 +75,26 @@ let router = createBrowserRouter([
 			{
 				path: "settings",
 				Component: Settings,
+			},
+			{
+				path: "shelves",
+				Component: Shelves,
+			},
+			{
+				path: "shops",
+				Component: Shops,
+			},
+			{
+				path: "shopping-lists",
+				Component: ShoppingLists,
+			},
+			{
+				path: "recipes",
+				Component: Recipes,
+			},
+			{
+				path: "meal-plans",
+				Component: MealPlans,
 			},
 		],
 	},

@@ -22,6 +22,7 @@ import MealPlans from "./pages/MealPlans.tsx";
 import { HouseholdProvider } from "./contexts/household-context.tsx";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "./components/ui/sidebar.tsx";
 import { AppSidebar } from "./components/AppSidebar.tsx";
+import HouseholdSelect from "./components/HouseholdSelect.tsx";
 
 function IndexRoute() {
 	const { isLoggedIn } = useLogin();
@@ -41,8 +42,11 @@ function RootLayout() {
 			{isLoggedIn && <AppSidebar />}
 			<SidebarInset className="bg-background text-foreground">
 				{isLoggedIn && (
-					<div className="p-2">
+					<div className="flex items-center p-2">
 						<SidebarTrigger />
+						<div className="flex flex-1 justify-center">
+							<HouseholdSelect />
+						</div>
 					</div>
 				)}
 				<Outlet />

@@ -11,6 +11,8 @@ type HouseholdContextType = {
 		updater: (household: IHousehold) => IHousehold,
 	) => void;
 	deleteHousehold: (householdId: string) => void;
+	activeHouseholdId: string | null;
+	setActiveHouseholdId: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
 export const HouseholdContext = createContext<HouseholdContextType>({
@@ -19,12 +21,15 @@ export const HouseholdContext = createContext<HouseholdContextType>({
 	addHousehold: () => {},
 	updateHousehold: () => {},
 	deleteHousehold: () => {},
+	activeHouseholdId: null,
+	setActiveHouseholdId: () => {},
 });
 
 export const HouseholdProvider: React.FC<{ children: React.ReactNode }> = ({
 	children,
 }) => {
 	const [households, setHouseholds] = React.useState<IHousehold[]>([]);
+	const [activeHouseholdId, setActiveHouseholdId] = React.useState<string | null>(null);
 
 	return (
 		<HouseholdContext.Provider
@@ -50,6 +55,8 @@ export const HouseholdProvider: React.FC<{ children: React.ReactNode }> = ({
 						),
 					);
 				},
+				activeHouseholdId,
+				setActiveHouseholdId,
 			}}
 		>
 			{children}

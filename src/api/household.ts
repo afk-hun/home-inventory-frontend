@@ -95,6 +95,21 @@ export const removeHousehold = (householdId: string): Promise<void> => {
 	}
 }
 
+export const setHousehold = (householdId: string): Promise<void> => {
+	return authFetch(SERVER_URL + "/household/set-household", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			...getCsrfHeaders(),
+		},
+		body: JSON.stringify({ householdId }),
+	})
+		.then(async (res) => {
+			if (!res.ok) throw new Error(await extractErrorMessage(res));
+		})
+		.catch((err) => { throw err; });
+};
+
 export const renameHousehold = (householdId: string, newName: string): Promise<void> => {
 	try {
 		return authFetch(SERVER_URL + "/household/rename", {

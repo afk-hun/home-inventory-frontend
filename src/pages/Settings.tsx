@@ -8,6 +8,10 @@ import {
 } from "@/components/ui/accordion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import HouseholdSettingsSection from "@/components/settings/HouseholdSettingsSection";
+import ItemTypeSettingsSection from "@/components/settings/ItemTypeSettingsSection";
+import ShelfTypeSettingsSection from "@/components/settings/ShelfTypeSettingsSection";
+import ShelfPlaceTypeSettingsSection from "@/components/settings/ShelfPlaceTypeSettingsSection";
+import UnitTypeSettingsSection from "@/components/settings/UnitTypeSettingsSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const sections = [
@@ -33,19 +37,25 @@ const sections = [
 		key: "itemTypes",
 		title: "Item Types",
 		description: "Set item type defaults.",
-		component: <>Item Types</>
+		component: <ItemTypeSettingsSection />,
 	},
 	{
 		key: "shelfTypes",
 		title: "Shelf Types",
 		description: "Set shelf type defaults.",
-		component: <>Shelf Types</>
+		component: <ShelfTypeSettingsSection />,
 	},
 	{
 		key: "shelfPlaces",
 		title: "Shelf Places",
 		description: "Set shelf place defaults.",
-		component: <>Shelf Places</>
+		component: <ShelfPlaceTypeSettingsSection />,
+	},
+	{
+		key: "units",
+		title: "Units",
+		description: "Set unit defaults.",
+		component: <UnitTypeSettingsSection />,
 	},
 ] as const;
 

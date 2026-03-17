@@ -12,6 +12,7 @@ import ItemTypeSettingsSection from "@/components/settings/ItemTypeSettingsSecti
 import ShelfTypeSettingsSection from "@/components/settings/ShelfTypeSettingsSection";
 import ShelfPlaceTypeSettingsSection from "@/components/settings/ShelfPlaceTypeSettingsSection";
 import UnitTypeSettingsSection from "@/components/settings/UnitTypeSettingsSection";
+import ItemSettingsSection from "@/components/settings/ItemSettingsSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const sections = [
@@ -31,7 +32,7 @@ const sections = [
 		key: "items",
 		title: "Items",
 		description: "Set item defaults.",
-		component: <>Items</>
+		component: <ItemSettingsSection />,
 	},
 	{
 		key: "itemTypes",

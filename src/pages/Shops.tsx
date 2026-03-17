@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import ShopsHeader from "@/components/shops/ShopsHeader";
+import ShopInvoiceList from "@/components/shops/ShopInvoiceList";
 
 const Shops = () => {
 	const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
@@ -17,6 +18,7 @@ const Shops = () => {
 				selectedStoreId={selectedStoreId}
 				onStoreChange={(id) => setSelectedStoreId(id || null)}
 			/>
+			<ShopInvoiceList storeId={selectedStoreId} />
 		</div>
 	);
 };

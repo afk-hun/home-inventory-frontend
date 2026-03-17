@@ -100,7 +100,7 @@ const ShopsHeader = ({ selectedStoreId, onStoreChange }: ShopsHeaderProps) => {
 	};
 
 	return (
-		<div className="flex items-center justify-between gap-4 p-4 border-b">
+		<div className="flex flex-col w-full md:flex-row items-start justify-between gap-4 pb-4 border-b">
 			{/* Left side */}
 			<div className="flex items-center gap-2">
 				{stores.length === 0 && !loading ? (

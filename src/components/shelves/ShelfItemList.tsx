@@ -6,6 +6,7 @@ import { IUnitType } from "@/model/unitType";
 import { fetchShelf, addShelfItem, removeShelfItem } from "@/api/shelf";
 import { fetchUnitTypes } from "@/api/unitType";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -20,9 +21,11 @@ const NONE = "__none__";
 interface ShelfItemListProps {
 	shelfId: string | null;
 	refreshKey?: number;
+	moveMode?: boolean;
+	onMoveSelectionChange?: (selectedIds: string[]) => void;
 }
 
-const ShelfItemList = ({ shelfId, refreshKey }: ShelfItemListProps) => {
+const ShelfItemList = ({ shelfId, refreshKey, moveMode = false, onMoveSelectionChange }: ShelfItemListProps) => {
 	const [items, setItems] = useState<IShelfItem[]>([]);
 	const [unitTypes, setUnitTypes] = useState<IUnitType[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -31,6 +34,7 @@ const ShelfItemList = ({ shelfId, refreshKey }: ShelfItemListProps) => {
 	const [editingId, setEditingId] = useState<string | null>(null);
 	const [editQuantity, setEditQuantity] = useState<string>("");
 	const [editUnit, setEditUnit] = useState<string>(NONE);
+	const [moveSelectedIds, setMoveSelectedIds] = useState<string[]>([]);
 
 	useEffect(() => {
 		fetchUnitTypes()
@@ -51,6 +55,21 @@ const ShelfItemList = ({ shelfId, refreshKey }: ShelfItemListProps) => {
 			.catch((err: Error) => setError(err.message))
 			.finally(() => setLoading(false));
 	}, [shelfId, refreshKey]);
+
+	useEffect(() => {
+		setMoveSelectedIds([]);
+		onMoveSelectionChange?.([]);
+	}, [moveMode]);
+
+	const toggleMoveItem = (itemId: string) => {
+		setMoveSelectedIds((prev) => {
+			const next = prev.includes(itemId)
+				? prev.filter((id) => id !== itemId)
+				: [...prev, itemId];
+			onMoveSelectionChange?.(next);
+			return next;
+		});
+	};
 
 	const startEdit = (item: IShelfItem) => {
 		setEditingId(item._id);
@@ -167,24 +186,34 @@ const ShelfItemList = ({ shelfId, refreshKey }: ShelfItemListProps) => {
 									<span className="w-20 text-sm text-muted-foreground">
 										{item.unit || "—"}
 									</span>
-									<Button
-										variant="ghost"
-										size="sm"
-										className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-										onClick={() => startEdit(item)}
-										disabled={loading}
-									>
-										<Pencil className="h-4 w-4" />
-									</Button>
-									<Button
-										variant="ghost"
-										size="sm"
-										className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-										onClick={() => handleDelete(item._id)}
-										disabled={loading}
-									>
-										<Trash2 className="h-4 w-4" />
-									</Button>
+									{!moveMode && (
+										<>
+											<Button
+												variant="ghost"
+												size="sm"
+												className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+												onClick={() => startEdit(item)}
+												disabled={loading}
+											>
+												<Pencil className="h-4 w-4" />
+											</Button>
+											<Button
+												variant="ghost"
+												size="sm"
+												className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+												onClick={() => handleDelete(item._id)}
+												disabled={loading}
+											>
+												<Trash2 className="h-4 w-4" />
+											</Button>
+										</>
+									)}
+									{moveMode && (
+										<Checkbox
+											checked={moveSelectedIds.includes(item._id)}
+											onCheckedChange={() => toggleMoveItem(item._id)}
+										/>
+									)}
 								</>
 							)}
 						</div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Settings2, Plus } from "lucide-react";
+import { Settings2, Plus, ArrowRightLeft, Check, Undo2 } from "lucide-react";
 
+import { IShelf } from "@/model/shelf";
 import { IShelfType } from "@/model/shelfType";
 import { IShelfPlaceType } from "@/model/shelfPlaceType";
 import { IItem } from "@/model/item";
@@ -9,7 +10,7 @@ import { fetchShelfTypes } from "@/api/shelfType";
 import { fetchShelfPlaceTypes } from "@/api/shelfPlaceType";
 import { fetchItems } from "@/api/item";
 import { fetchUnitTypes } from "@/api/unitType";
-import { fetchShelf, updateShelf, addShelfItem } from "@/api/shelf";
+import { fetchShelf, updateShelf, addShelfItem, fetchShelves } from "@/api/shelf";
 import ItemSettingsSection from "@/components/settings/ItemSettingsSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,9 +36,23 @@ interface ShelfDetailsProps {
 	shelfId: string | null;
 	shelfName?: string;
 	onItemAdded?: () => void;
+	moveMode?: boolean;
+	moveSelectedCount?: number;
+	onMoveStart?: () => void;
+	onMoveCancel?: () => void;
+	onMoveConfirm?: (targetShelfId: string) => void;
 }
 
-const ShelfDetails = ({ shelfId, shelfName, onItemAdded }: ShelfDetailsProps) => {
+const ShelfDetails = ({
+	shelfId,
+	shelfName,
+	onItemAdded,
+	moveMode = false,
+	moveSelectedCount = 0,
+	onMoveStart,
+	onMoveCancel,
+	onMoveConfirm,
+}: ShelfDetailsProps) => {
 	// Properties state
 	const [shelfTypes, setShelfTypes] = useState<IShelfType[]>([]);
 	const [placeTypes, setPlaceTypes] = useState<IShelfPlaceType[]>([]);
@@ -59,6 +74,11 @@ const ShelfDetails = ({ shelfId, shelfName, onItemAdded }: ShelfDetailsProps) =>
 	const [adding, setAdding] = useState(false);
 	const [addError, setAddError] = useState<string | null>(null);
 	const [itemsDialogOpen, setItemsDialogOpen] = useState(false);
+
+	// Move mode state
+	const [shelves, setShelves] = useState<IShelf[]>([]);
+	const [moveTarget, setMoveTarget] = useState<string>(NONE);
+	const [loadingShelves, setLoadingShelves] = useState(false);
 
 	useEffect(() => {
 		fetchShelfTypes()
@@ -94,6 +114,20 @@ const ShelfDetails = ({ shelfId, shelfName, onItemAdded }: ShelfDetailsProps) =>
 			.catch((err) => console.error(err))
 			.finally(() => setLoading(false));
 	}, [shelfId]);
+
+	useEffect(() => {
+		if (moveMode) {
+			setMoveTarget(NONE);
+			setLoadingShelves(true);
+			fetchShelves()
+				.then((all) => setShelves(all.filter((s) => s._id !== shelfId)))
+				.catch((err) => console.error(err))
+				.finally(() => setLoadingShelves(false));
+		} else {
+			setShelves([]);
+			setMoveTarget(NONE);
+		}
+	}, [moveMode, shelfId]);
 
 	const save = (updates: { name?: string; type?: string; place?: string }) => {
 		if (!shelfId) return;
@@ -192,22 +226,72 @@ const ShelfDetails = ({ shelfId, shelfName, onItemAdded }: ShelfDetailsProps) =>
 						)}
 					</>
 				)}
-				<Button
-					variant="ghost"
-					size="sm"
-					className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
-					onClick={() => setDialogOpen(true)}
-				>
-					<Settings2 className="h-3.5 w-3.5" />
-				</Button>
-				<Button
-					variant="ghost"
-					size="sm"
-					className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
-					onClick={openAddDialog}
-				>
-					<Plus className="h-3.5 w-3.5" />
-				</Button>
+				{!moveMode && (
+					<>
+						<Button
+							variant="ghost"
+							size="sm"
+							className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+							onClick={() => setDialogOpen(true)}
+						>
+							<Settings2 className="h-3.5 w-3.5" />
+						</Button>
+						<Button
+							variant="ghost"
+							size="sm"
+							className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+							onClick={openAddDialog}
+						>
+							<Plus className="h-3.5 w-3.5" />
+						</Button>
+						<Button
+							variant="ghost"
+							size="sm"
+							className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+							onClick={onMoveStart}
+						>
+							<ArrowRightLeft className="h-3.5 w-3.5" />
+						</Button>
+					</>
+				)}
+				{moveMode && (
+					<>
+						<Select
+							value={moveTarget}
+							onValueChange={setMoveTarget}
+							disabled={loadingShelves}
+						>
+							<SelectTrigger className="h-6 w-36 text-xs">
+								<SelectValue placeholder={loadingShelves ? "Loading…" : "Select shelf"} />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value={NONE}>—</SelectItem>
+								{shelves.map((s) => (
+									<SelectItem key={s._id} value={s._id}>
+										{s.name}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+						<Button
+							variant="ghost"
+							size="sm"
+							className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+							onClick={() => onMoveConfirm?.(moveTarget)}
+							disabled={moveTarget === NONE || moveSelectedCount === 0}
+						>
+							<Check className="h-3.5 w-3.5" />
+						</Button>
+						<Button
+							variant="ghost"
+							size="sm"
+							className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+							onClick={onMoveCancel}
+						>
+							<Undo2 className="h-3.5 w-3.5" />
+						</Button>
+					</>
+				)}
 			</div>
 
 			{/* Properties dialog */}

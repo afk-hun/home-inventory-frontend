@@ -7,6 +7,7 @@ import { fetchShelfTypes } from "@/api/shelfType";
 import { fetchShelfPlaceTypes } from "@/api/shelfPlaceType";
 import { fetchShelf, updateShelf } from "@/api/shelf";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
 	Dialog,
@@ -26,11 +27,13 @@ const NONE = "__none__";
 
 interface ShelfDetailsProps {
 	shelfId: string | null;
+	shelfName?: string;
 }
 
-const ShelfDetails = ({ shelfId }: ShelfDetailsProps) => {
+const ShelfDetails = ({ shelfId, shelfName }: ShelfDetailsProps) => {
 	const [shelfTypes, setShelfTypes] = useState<IShelfType[]>([]);
 	const [placeTypes, setPlaceTypes] = useState<IShelfPlaceType[]>([]);
+	const [name, setName] = useState<string>("");
 	const [type, setType] = useState<string>(NONE);
 	const [place, setPlace] = useState<string>(NONE);
 	const [loading, setLoading] = useState(false);
@@ -49,14 +52,17 @@ const ShelfDetails = ({ shelfId }: ShelfDetailsProps) => {
 
 	useEffect(() => {
 		if (!shelfId) {
+			setName("");
 			setType(NONE);
 			setPlace(NONE);
 			return;
 		}
+		setName(shelfName || "");
 		setLoading(true);
 		setError(null);
 		fetchShelf(shelfId)
 			.then((shelf) => {
+				setName(shelf.name);
 				setType(shelf.type || NONE);
 				setPlace(shelf.place || NONE);
 			})
@@ -64,26 +70,33 @@ const ShelfDetails = ({ shelfId }: ShelfDetailsProps) => {
 			.finally(() => setLoading(false));
 	}, [shelfId]);
 
-	const save = (newType: string, newPlace: string) => {
+	const save = (updates: { name?: string; type?: string; place?: string }) => {
 		if (!shelfId) return;
 		setSaving(true);
 		setError(null);
-		updateShelf(shelfId, {
-			type: newType === NONE ? "" : newType,
-			place: newPlace === NONE ? "" : newPlace,
-		})
+		updateShelf(shelfId, updates)
 			.catch((err: Error) => setError(err.message))
 			.finally(() => setSaving(false));
 	};
 
 	const handleTypeChange = (value: string) => {
 		setType(value);
-		save(value, place);
+		save({ type: value === NONE ? "" : value, place: place === NONE ? "" : place });
 	};
 
 	const handlePlaceChange = (value: string) => {
 		setPlace(value);
-		save(type, value);
+		save({ type: type === NONE ? "" : type, place: value === NONE ? "" : value });
+	};
+
+	const handleNameSave = () => {
+		const trimmed = name.trim();
+		if (!trimmed || !shelfId) return;
+		save({ name: trimmed });
+	};
+
+	const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		if (e.key === "Enter") handleNameSave();
 	};
 
 	if (!shelfId) return null;
@@ -133,6 +146,17 @@ const ShelfDetails = ({ shelfId }: ShelfDetailsProps) => {
 					</DialogHeader>
 
 					<div className="space-y-4 pt-1">
+						<div className="space-y-1.5">
+							<Label>Name</Label>
+							<Input
+								value={name}
+								onChange={(e) => setName(e.target.value)}
+								onBlur={handleNameSave}
+								onKeyDown={handleNameKeyDown}
+								disabled={saving}
+							/>
+						</div>
+
 						<div className="space-y-1.5">
 							<Label>Type</Label>
 							<Select

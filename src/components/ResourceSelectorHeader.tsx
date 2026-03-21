@@ -28,7 +28,7 @@ interface ResourceItem {
 
 interface ResourceSelectorHeaderProps {
 	selectedId: string | null;
-	onSelectionChange: (id: string) => void;
+	onSelectionChange: (id: string, name?: string) => void;
 	fetchItems: () => Promise<ResourceItem[]>;
 	createItem: (name: string) => Promise<ResourceItem>;
 	deleteItem: (id: string) => Promise<void>;
@@ -59,7 +59,7 @@ const ResourceSelectorHeader = ({
 			.then((data) => {
 				setItems(data);
 				if (data.length > 0 && !selectedId) {
-					onSelectionChange(data[0]._id);
+					onSelectionChange(data[0]._id, data[0].name);
 				}
 			})
 			.catch((err) => {
@@ -80,7 +80,7 @@ const ResourceSelectorHeader = ({
 				const remaining = items.filter((item) => item._id !== selectedId);
 				setItems(remaining);
 				if (remaining.length > 0) {
-					onSelectionChange(remaining[0]._id);
+					onSelectionChange(remaining[0]._id, remaining[0].name);
 				} else {
 					onSelectionChange("");
 				}
@@ -103,7 +103,7 @@ const ResourceSelectorHeader = ({
 		createItem(trimmed)
 			.then((created) => {
 				setItems((prev) => [...prev, created]);
-				onSelectionChange(created._id);
+				onSelectionChange(created._id, created.name);
 				setNewName("");
 			})
 			.catch((err) => {
@@ -130,7 +130,7 @@ const ResourceSelectorHeader = ({
 						<>
 							<Select
 								value={selectedId ?? ""}
-								onValueChange={onSelectionChange}
+								onValueChange={(id) => { const item = items.find((i) => i._id === id); onSelectionChange(id, item?.name); }}
 								disabled={loading}
 							>
 								<SelectTrigger className="w-48">

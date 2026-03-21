@@ -2,11 +2,13 @@ import { useState } from "react";
 
 import ResourceSelectorHeader from "@/components/ResourceSelectorHeader";
 import ShelfDetails from "@/components/shelves/ShelfDetails";
+import ShelfItemList from "@/components/shelves/ShelfItemList";
 import { fetchShelves, createShelf, deleteShelf } from "@/api/shelf";
 
 const Shelves = () => {
 	const [selectedShelfId, setSelectedShelfId] = useState<string | null>(null);
 	const [selectedShelfName, setSelectedShelfName] = useState<string>("");
+	const [itemListRefreshKey, setItemListRefreshKey] = useState(0);
 
 	return (
 		<div className="mx-auto w-full max-w-6xl px-4 py-8 md:py-10">
@@ -28,8 +30,13 @@ const Shelves = () => {
 				entityLabel="shelf"
 				inputPlaceholder="New shelf name"
 			>
-				<ShelfDetails shelfId={selectedShelfId} shelfName={selectedShelfName} />
+				<ShelfDetails
+					shelfId={selectedShelfId}
+					shelfName={selectedShelfName}
+					onItemAdded={() => setItemListRefreshKey((k) => k + 1)}
+				/>
 			</ResourceSelectorHeader>
+			<ShelfItemList shelfId={selectedShelfId} refreshKey={itemListRefreshKey} />
 		</div>
 	);
 };

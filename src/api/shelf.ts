@@ -92,6 +92,49 @@ export const updateShelf = (
 		});
 };
 
+export const addShelfItem = (
+	shelfId: string,
+	itemId: string,
+	itemName: string | undefined,
+	quantity: number,
+	unit: string | undefined,
+): Promise<void> => {
+	return authFetch(SERVER_URL + "/shelf/shelf/add-item", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			...getCsrfHeaders(),
+		},
+		body: JSON.stringify({ shelfId, itemId, itemName, quantity, unit }),
+	})
+		.then(async (res) => {
+			if (!res.ok) throw new Error(await extractErrorMessage(res));
+		})
+		.catch((err) => {
+			throw err;
+		});
+};
+
+export const removeShelfItem = (
+	shelfId: string,
+	shelfItemId: string,
+): Promise<void> => {
+	return authFetch(SERVER_URL + "/shelf/shelf/remove-item", {
+		method: "DELETE",
+		headers: {
+			"Content-Type": "application/json",
+			...getCsrfHeaders(),
+		},
+		body: JSON.stringify({ shelfId, shelfItemId }),
+	})
+		.then(async (res) => {
+			if (!res.ok) throw new Error(await extractErrorMessage(res));
+		})
+		.catch((err) => {
+			throw err;
+		});
+};
+
 export const deleteShelf = (shelfId: string): Promise<void> => {
 	return authFetch(SERVER_URL + "/shelf/shelf", {
 		method: "DELETE",

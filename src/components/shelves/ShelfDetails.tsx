@@ -1,17 +1,23 @@
 import { useState, useEffect } from "react";
-import { Settings2 } from "lucide-react";
+import { Settings2, Plus } from "lucide-react";
 
 import { IShelfType } from "@/model/shelfType";
 import { IShelfPlaceType } from "@/model/shelfPlaceType";
+import { IItem } from "@/model/item";
+import { IUnitType } from "@/model/unitType";
 import { fetchShelfTypes } from "@/api/shelfType";
 import { fetchShelfPlaceTypes } from "@/api/shelfPlaceType";
-import { fetchShelf, updateShelf } from "@/api/shelf";
+import { fetchItems } from "@/api/item";
+import { fetchUnitTypes } from "@/api/unitType";
+import { fetchShelf, updateShelf, addShelfItem } from "@/api/shelf";
+import ItemSettingsSection from "@/components/settings/ItemSettingsSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
 	Dialog,
 	DialogContent,
+	DialogFooter,
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
@@ -28,9 +34,11 @@ const NONE = "__none__";
 interface ShelfDetailsProps {
 	shelfId: string | null;
 	shelfName?: string;
+	onItemAdded?: () => void;
 }
 
-const ShelfDetails = ({ shelfId, shelfName }: ShelfDetailsProps) => {
+const ShelfDetails = ({ shelfId, shelfName, onItemAdded }: ShelfDetailsProps) => {
+	// Properties state
 	const [shelfTypes, setShelfTypes] = useState<IShelfType[]>([]);
 	const [placeTypes, setPlaceTypes] = useState<IShelfPlaceType[]>([]);
 	const [name, setName] = useState<string>("");
@@ -41,12 +49,29 @@ const ShelfDetails = ({ shelfId, shelfName }: ShelfDetailsProps) => {
 	const [error, setError] = useState<string | null>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
 
+	// Add item state
+	const [availableItems, setAvailableItems] = useState<IItem[]>([]);
+	const [unitTypes, setUnitTypes] = useState<IUnitType[]>([]);
+	const [addDialogOpen, setAddDialogOpen] = useState(false);
+	const [selectedItemId, setSelectedItemId] = useState<string>(NONE);
+	const [addQuantity, setAddQuantity] = useState<string>("");
+	const [addUnit, setAddUnit] = useState<string>(NONE);
+	const [adding, setAdding] = useState(false);
+	const [addError, setAddError] = useState<string | null>(null);
+	const [itemsDialogOpen, setItemsDialogOpen] = useState(false);
+
 	useEffect(() => {
 		fetchShelfTypes()
 			.then(setShelfTypes)
 			.catch((err) => console.error(err));
 		fetchShelfPlaceTypes()
 			.then(setPlaceTypes)
+			.catch((err) => console.error(err));
+		fetchItems()
+			.then(setAvailableItems)
+			.catch((err) => console.error(err));
+		fetchUnitTypes()
+			.then(setUnitTypes)
 			.catch((err) => console.error(err));
 	}, []);
 
@@ -99,6 +124,44 @@ const ShelfDetails = ({ shelfId, shelfName }: ShelfDetailsProps) => {
 		if (e.key === "Enter") handleNameSave();
 	};
 
+	const handleItemsDialogChange = (open: boolean) => {
+		setItemsDialogOpen(open);
+		if (!open) {
+			fetchItems()
+				.then(setAvailableItems)
+				.catch((err) => console.error(err));
+		}
+	};
+
+	const openAddDialog = () => {
+		setSelectedItemId(NONE);
+		setAddQuantity("");
+		setAddUnit(NONE);
+		setAddError(null);
+		setAddDialogOpen(true);
+	};
+
+	const handleAdd = () => {
+		if (!shelfId || selectedItemId === NONE) return;
+		const qty = parseFloat(addQuantity);
+		if (isNaN(qty) || qty <= 0) {
+			setAddError("Please enter a valid quantity.");
+			return;
+		}
+		const item = availableItems.find((i) => i._id === selectedItemId);
+		if (!item) return;
+		const unit = addUnit === NONE ? undefined : addUnit;
+		setAdding(true);
+		setAddError(null);
+		addShelfItem(shelfId, item._id, item.name, qty, unit)
+			.then(() => {
+				setAddDialogOpen(false);
+				onItemAdded?.();
+			})
+			.catch((err: Error) => setAddError(err.message))
+			.finally(() => setAdding(false));
+	};
+
 	if (!shelfId) return null;
 
 	const displayType = type !== NONE ? type : null;
@@ -137,8 +200,17 @@ const ShelfDetails = ({ shelfId, shelfName }: ShelfDetailsProps) => {
 				>
 					<Settings2 className="h-3.5 w-3.5" />
 				</Button>
+				<Button
+					variant="ghost"
+					size="sm"
+					className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+					onClick={openAddDialog}
+				>
+					<Plus className="h-3.5 w-3.5" />
+				</Button>
 			</div>
 
+			{/* Properties dialog */}
 			<Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
 				<DialogContent className="max-w-xs">
 					<DialogHeader>
@@ -204,6 +276,109 @@ const ShelfDetails = ({ shelfId, shelfName }: ShelfDetailsProps) => {
 					</div>
 				</DialogContent>
 			</Dialog>
+
+			{/* Add item dialog */}
+			<Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+				<DialogContent className="max-w-xs">
+					<DialogHeader>
+						<DialogTitle>Add Item to Shelf</DialogTitle>
+					</DialogHeader>
+
+					<div className="space-y-4 pt-1">
+						<div className="space-y-1.5">
+							<Label>Item</Label>
+							<div className="flex gap-2">
+								<Select
+									value={selectedItemId}
+									onValueChange={setSelectedItemId}
+									disabled={adding}
+								>
+									<SelectTrigger className="flex-1">
+										<SelectValue placeholder="Select an item" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value={NONE}>—</SelectItem>
+										{availableItems.map((i) => (
+											<SelectItem key={i._id} value={i._id}>
+												{i.name}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+								<Button
+									variant="outline"
+									size="sm"
+									className="shrink-0"
+									onClick={() => setItemsDialogOpen(true)}
+									disabled={adding}
+								>
+									New
+								</Button>
+							</div>
+						</div>
+
+						<div className="space-y-1.5">
+							<Label>Quantity</Label>
+							<Input
+								type="number"
+								min="0"
+								value={addQuantity}
+								onChange={(e) => setAddQuantity(e.target.value)}
+								disabled={adding}
+							/>
+						</div>
+
+						<div className="space-y-1.5">
+							<Label>Unit</Label>
+							<Select
+								value={addUnit}
+								onValueChange={setAddUnit}
+								disabled={adding}
+							>
+								<SelectTrigger>
+									<SelectValue placeholder="—" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value={NONE}>—</SelectItem>
+									{unitTypes.map((u) => (
+										<SelectItem key={u._id} value={u.name}>
+											{u.name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
+
+						{addError && <p className="text-destructive text-xs">{addError}</p>}
+					</div>
+
+					<DialogFooter>
+						<Button
+							variant="outline"
+							onClick={() => setAddDialogOpen(false)}
+							disabled={adding}
+						>
+							Cancel
+						</Button>
+						<Button
+							onClick={handleAdd}
+							disabled={adding || selectedItemId === NONE}
+						>
+							{adding ? "Adding…" : "Add"}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+		{/* Items management dialog */}
+		<Dialog open={itemsDialogOpen} onOpenChange={handleItemsDialogChange}>
+			<DialogContent className="max-w-lg">
+				<DialogHeader>
+					<DialogTitle>Manage Items</DialogTitle>
+				</DialogHeader>
+				<ItemSettingsSection />
+			</DialogContent>
+		</Dialog>
 		</>
 	);
 };

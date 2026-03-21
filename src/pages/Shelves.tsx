@@ -1,6 +1,12 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+
+import ResourceSelectorHeader from "@/components/ResourceSelectorHeader";
+import ShelfDetails from "@/components/shelves/ShelfDetails";
+import { fetchShelves, createShelf, deleteShelf } from "@/api/shelf";
 
 const Shelves = () => {
+	const [selectedShelfId, setSelectedShelfId] = useState<string | null>(null);
+
 	return (
 		<div className="mx-auto w-full max-w-6xl px-4 py-8 md:py-10">
 			<div className="mb-6 space-y-1">
@@ -9,17 +15,17 @@ const Shelves = () => {
 					Manage your shelves and their contents.
 				</p>
 			</div>
-			<Card className="border-border/60">
-				<CardHeader>
-					<CardTitle>Coming Soon</CardTitle>
-					<CardDescription>Shelf management is under construction.</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<div className="text-muted-foreground rounded-md border border-dashed p-8 text-center text-sm">
-						This feature is not yet available.
-					</div>
-				</CardContent>
-			</Card>
+			<ResourceSelectorHeader
+				selectedId={selectedShelfId}
+				onSelectionChange={(id) => setSelectedShelfId(id || null)}
+				fetchItems={fetchShelves}
+				createItem={createShelf}
+				deleteItem={deleteShelf}
+				entityLabel="shelf"
+				inputPlaceholder="New shelf name"
+			>
+				<ShelfDetails shelfId={selectedShelfId} />
+			</ResourceSelectorHeader>
 		</div>
 	);
 };

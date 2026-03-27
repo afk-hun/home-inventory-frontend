@@ -35,6 +35,7 @@ const ShelfItemList = ({ shelfId, refreshKey, moveMode = false, onMoveSelectionC
 	const [editQuantity, setEditQuantity] = useState<string>("");
 	const [editUnit, setEditUnit] = useState<string>(NONE);
 	const [moveSelectedIds, setMoveSelectedIds] = useState<string[]>([]);
+	const [searchQuery, setSearchQuery] = useState<string>("");
 
 	useEffect(() => {
 		fetchUnitTypes()
@@ -46,6 +47,7 @@ const ShelfItemList = ({ shelfId, refreshKey, moveMode = false, onMoveSelectionC
 		if (!shelfId) {
 			setItems([]);
 			setEditingId(null);
+			setSearchQuery("");
 			return;
 		}
 		setLoading(true);
@@ -109,11 +111,26 @@ const ShelfItemList = ({ shelfId, refreshKey, moveMode = false, onMoveSelectionC
 			.finally(() => setLoading(false));
 	};
 
+	const filteredItems = items.filter((item) => {
+		const name = (item.itemName || item.item.name).toLowerCase();
+		return name.includes(searchQuery.toLowerCase());
+	});
+
 	if (!shelfId) return null;
 
 	return (
 		<div className="mt-6">
-			<h2 className="mb-3 text-sm font-medium text-muted-foreground">Items</h2>
+			<div className="mb-3 flex items-center gap-3">
+				<h2 className="text-sm font-medium text-muted-foreground">Items</h2>
+				{items.length > 0 && (
+					<Input
+						placeholder="Search items…"
+						value={searchQuery}
+						onChange={(e) => setSearchQuery(e.target.value)}
+						className="h-7 max-w-60 text-sm"
+					/>
+				)}
+			</div>
 			{loading && (
 				<p className="text-sm text-muted-foreground">Loading…</p>
 			)}
@@ -123,8 +140,13 @@ const ShelfItemList = ({ shelfId, refreshKey, moveMode = false, onMoveSelectionC
 					No items on this shelf.
 				</p>
 			)}
+			{!loading && items.length > 0 && filteredItems.length === 0 && (
+				<p className="text-sm italic text-muted-foreground">
+					No items found matching "{searchQuery}".
+				</p>
+			)}
 			<div className="space-y-0.5">
-				{items.map((item) => {
+				{filteredItems.map((item) => {
 					const displayName = item.itemName || item.item.name;
 					const isEditing = editingId === item._id;
 					return (

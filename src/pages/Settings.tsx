@@ -13,6 +13,7 @@ import ShelfTypeSettingsSection from "@/components/settings/ShelfTypeSettingsSec
 import ShelfPlaceTypeSettingsSection from "@/components/settings/ShelfPlaceTypeSettingsSection";
 import UnitTypeSettingsSection from "@/components/settings/UnitTypeSettingsSection";
 import ItemSettingsSection from "@/components/settings/ItemSettingsSection";
+import RecipeTypeSettingsSection from "@/components/settings/RecipeTypeSettingsSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const sections = [
@@ -57,6 +58,12 @@ const sections = [
 		title: "Units",
 		description: "Set unit defaults.",
 		component: <UnitTypeSettingsSection />,
+	},
+	{
+		key: "recipeTypes",
+		title: "Recipe Types",
+		description: "Manage recipe type labels.",
+		component: <RecipeTypeSettingsSection />,
 	},
 ] as const;
 

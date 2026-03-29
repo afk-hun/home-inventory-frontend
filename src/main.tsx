@@ -20,6 +20,7 @@ import ShoppingLists from "./pages/ShoppingLists.tsx";
 import Recipes from "./pages/Recipes.tsx";
 import RecipeForm from "./pages/RecipeForm.tsx";
 import MealPlans from "./pages/MealPlans.tsx";
+import MealForm from "./pages/MealForm.tsx";
 import { HouseholdProvider } from "./contexts/household-context.tsx";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "./components/ui/sidebar.tsx";
 import { AppSidebar } from "./components/AppSidebar.tsx";
@@ -108,6 +109,14 @@ let router = createBrowserRouter([
 			{
 				path: "meal-plans",
 				Component: MealPlans,
+			},
+			{
+				path: "meal-plans/meal/new",
+				Component: MealForm,
+			},
+			{
+				path: "meal-plans/meal/:mealId/edit",
+				Component: MealForm,
 			},
 		],
 	},

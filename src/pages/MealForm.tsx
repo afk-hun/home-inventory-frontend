@@ -40,6 +40,7 @@ const MealForm = () => {
 
 	const [error, setError] = useState("");
 	const [saving, setSaving] = useState(false);
+	const [deleting, setDeleting] = useState(false);
 
 	useEffect(() => {
 		fetchRecipes().then(setRecipes).catch(console.error);
@@ -92,6 +93,18 @@ const MealForm = () => {
 			.catch((err: Error) => {
 				setError(err.message ?? "Failed to save.");
 				setSaving(false);
+			});
+	};
+
+	const handleDelete = () => {
+		if (!schedule || !mealId) return;
+		setDeleting(true);
+		const updatedMeals = schedule.meals.filter((m) => m._id !== mealId);
+		updateSchedule(scheduleId, { meals: updatedMeals })
+			.then(() => navigate("/meal-plans"))
+			.catch((err: Error) => {
+				setError(err.message ?? "Failed to delete.");
+				setDeleting(false);
 			});
 	};
 
@@ -187,16 +200,28 @@ const MealForm = () => {
 
 					{error && <p className="text-sm text-destructive">{error}</p>}
 
-					<div className="flex gap-2 pt-2">
-						<Button onClick={handleSave} disabled={saving}>
-							{saving ? "Saving…" : "Save meal"}
-						</Button>
-						<Button
-							variant="outline"
-							onClick={() => navigate("/meal-plans")}
-						>
-							Cancel
-						</Button>
+					<div className="flex items-center justify-between pt-2">
+						<div className="flex gap-2">
+							<Button onClick={handleSave} disabled={saving || deleting}>
+								{saving ? "Saving…" : "Save meal"}
+							</Button>
+							<Button
+								variant="outline"
+								onClick={() => navigate("/meal-plans")}
+								disabled={saving || deleting}
+							>
+								Cancel
+							</Button>
+						</div>
+						{isEdit && (
+							<Button
+								variant="destructive"
+								onClick={handleDelete}
+								disabled={saving || deleting}
+							>
+								{deleting ? "Deleting…" : "Delete meal"}
+							</Button>
+						)}
 					</div>
 				</CardContent>
 			</Card>

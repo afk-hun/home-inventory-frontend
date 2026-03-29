@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router";
 import { Trash2, Pencil } from "lucide-react";
 
 import { IIngredient } from "@/model/recipe";
-import { IItem } from "@/model/item";
+// import { IItem } from "@/model/item";
 import { IRecipeType } from "@/model/recipeType";
 import { fetchItems } from "@/api/item";
 import { fetchRecipe, createRecipe, updateRecipe } from "@/api/recipe";
@@ -39,7 +39,7 @@ const RecipeForm = () => {
 	const [portion, setPortion] = useState<string>("");
 	const [type, setType] = useState<string>(NONE);
 	const [ingredients, setIngredients] = useState<IngredientWithName[]>([]);
-	const [availableItems, setAvailableItems] = useState<IItem[]>([]);
+	// const [availableItems, setAvailableItems] = useState<IItem[]>([]);
 	const [recipeTypes, setRecipeTypes] = useState<IRecipeType[]>([]);
 
 	const [loading, setLoading] = useState<boolean>(false);
@@ -49,7 +49,7 @@ const RecipeForm = () => {
 
 	useEffect(() => {
 		fetchItems()
-			.then(setAvailableItems)
+			// .then(setAvailableItems)
 			.catch((err) => console.error(err));
 		fetchRecipeTypes()
 			.then(setRecipeTypes)
@@ -68,7 +68,7 @@ const RecipeForm = () => {
 				setType(recipe.type || NONE);
 				fetchItems()
 					.then((items) => {
-						setAvailableItems(items);
+						// setAvailableItems(items);
 						const mapped: IngredientWithName[] = recipe.ingredients.map((ing) => {
 							const found = items.find((i) => i._id === ing.item);
 							return { ingredient: ing, itemName: found ? found.name : ing.item };

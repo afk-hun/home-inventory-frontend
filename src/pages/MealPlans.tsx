@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { format, startOfMonth, endOfMonth, isSameDay } from "date-fns";
-import { ChevronLeft, ChevronRight, Plus, Pencil } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Pencil, BookOpen } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 
 import { Calendar } from "@/components/ui/calendar";
@@ -118,7 +118,7 @@ const MealPlans = () => {
 
 			{/* Calendar */}
 			<Card className="mb-6 border-border/60">
-				<CardContent className="flex justify-center p-4">
+				<CardContent className="flex justify-center">
 					{loading ? (
 						<div className="p-8 text-sm text-muted-foreground">Loading…</div>
 					) : (
@@ -129,6 +129,7 @@ const MealPlans = () => {
 							month={currentMonth}
 							onMonthChange={setCurrentMonth}
 							hideNavigation
+							weekStartsOn={1}
 						/>
 					)}
 				</CardContent>
@@ -178,7 +179,19 @@ const MealPlans = () => {
 												: ""}
 										</p>
 									</div>
-									<Pencil className="h-4 w-4 text-muted-foreground" />
+									<div className="flex items-center gap-2">
+										<Button
+											variant="ghost"
+											size="icon"
+											onClick={(e) => {
+												e.stopPropagation();
+												navigate(`/recipes/${meal.recipe}`);
+											}}
+										>
+											<BookOpen className="h-4 w-4 text-muted-foreground" />
+										</Button>
+										<Pencil className="h-4 w-4 text-muted-foreground" />
+									</div>
 								</CardContent>
 							</Card>
 						))}

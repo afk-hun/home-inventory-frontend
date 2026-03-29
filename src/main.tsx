@@ -18,6 +18,7 @@ import Shelves from "./pages/Shelves.tsx";
 import Shops from "./pages/Shops.tsx";
 import ShoppingLists from "./pages/ShoppingLists.tsx";
 import Recipes from "./pages/Recipes.tsx";
+import RecipeForm from "./pages/RecipeForm.tsx";
 import MealPlans from "./pages/MealPlans.tsx";
 import { HouseholdProvider } from "./contexts/household-context.tsx";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "./components/ui/sidebar.tsx";
@@ -95,6 +96,14 @@ let router = createBrowserRouter([
 			{
 				path: "recipes",
 				Component: Recipes,
+			},
+			{
+				path: "recipes/new",
+				Component: RecipeForm,
+			},
+			{
+				path: "recipes/:id",
+				Component: RecipeForm,
 			},
 			{
 				path: "meal-plans",

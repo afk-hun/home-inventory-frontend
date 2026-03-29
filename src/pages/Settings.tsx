@@ -14,6 +14,7 @@ import ShelfPlaceTypeSettingsSection from "@/components/settings/ShelfPlaceTypeS
 import UnitTypeSettingsSection from "@/components/settings/UnitTypeSettingsSection";
 import ItemSettingsSection from "@/components/settings/ItemSettingsSection";
 import RecipeTypeSettingsSection from "@/components/settings/RecipeTypeSettingsSection";
+import MealTypeSettingsSection from "@/components/settings/MealTypeSettingsSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const sections = [
@@ -64,6 +65,12 @@ const sections = [
 		title: "Recipe Types",
 		description: "Manage recipe type labels.",
 		component: <RecipeTypeSettingsSection />,
+	},
+	{
+		key: "mealTypes",
+		title: "Meal Types",
+		description: "Manage meal type labels.",
+		component: <MealTypeSettingsSection />,
 	},
 ] as const;
 

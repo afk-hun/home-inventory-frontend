@@ -17,6 +17,7 @@ import Settings from "./pages/Settings.tsx";
 import Shelves from "./pages/Shelves.tsx";
 import Shops from "./pages/Shops.tsx";
 import ShoppingLists from "./pages/ShoppingLists.tsx";
+import ShoppingListForm from "./pages/ShoppingListForm.tsx";
 import Recipes from "./pages/Recipes.tsx";
 import RecipeForm from "./pages/RecipeForm.tsx";
 import MealPlans from "./pages/MealPlans.tsx";
@@ -93,6 +94,14 @@ let router = createBrowserRouter([
 			{
 				path: "shopping-lists",
 				Component: ShoppingLists,
+			},
+			{
+				path: "shopping-lists/new",
+				Component: ShoppingListForm,
+			},
+			{
+				path: "shopping-lists/:id",
+				Component: ShoppingListForm,
 			},
 			{
 				path: "recipes",

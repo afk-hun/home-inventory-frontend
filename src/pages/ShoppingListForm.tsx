@@ -4,6 +4,7 @@ import { Trash2 } from "lucide-react";
 
 import { IShoppingListItem } from "@/model/shoppingList";
 import { IItem } from "@/model/item";
+import { IRecipe } from "@/model/recipe";
 import { IStore } from "@/model/store";
 import { IUnitType } from "@/model/unitType";
 import {
@@ -12,6 +13,7 @@ import {
 	updateShoppingList,
 } from "@/api/shoppingList";
 import { fetchItemsByStore } from "@/api/item";
+import { fetchRecipes, fetchMissingIngredients } from "@/api/recipe";
 import { fetchStores } from "@/api/store";
 import { fetchUnitTypes } from "@/api/unitType";
 import ItemSettingsSection from "@/components/settings/ItemSettingsSection";
@@ -58,6 +60,10 @@ const ShoppingListForm = () => {
 
 	const [selectedItemId, setSelectedItemId] = useState<string>(NONE);
 
+	const [recipes, setRecipes] = useState<IRecipe[]>([]);
+	const [selectedRecipeId, setSelectedRecipeId] = useState<string>(NONE);
+	const [importing, setImporting] = useState<boolean>(false);
+
 	const [loading, setLoading] = useState<boolean>(false);
 	const [saving, setSaving] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
@@ -69,6 +75,9 @@ const ShoppingListForm = () => {
 			.catch((err) => console.error(err));
 		fetchUnitTypes()
 			.then(setUnitTypes)
+			.catch((err) => console.error(err));
+		fetchRecipes()
+			.then(setRecipes)
 			.catch((err) => console.error(err));
 	}, []);
 
@@ -98,6 +107,28 @@ const ShoppingListForm = () => {
 			.catch((err: Error) => setError(err.message))
 			.finally(() => setLoading(false));
 	}, [id]);
+
+	const handleImportRecipe = () => {
+		if (selectedRecipeId === NONE) return;
+		setImporting(true);
+		setError(null);
+		fetchMissingIngredients(selectedRecipeId)
+			.then((missing) => {
+				setItems((prev) => [
+					...prev,
+					...missing.map((m) => ({
+						itemName: m.item.name,
+						quantity: m.amount,
+						unit: m.unit,
+						_key: nextKey(),
+						checked: false,
+					})),
+				]);
+				setSelectedRecipeId(NONE);
+			})
+			.catch((err: Error) => setError(err.message))
+			.finally(() => setImporting(false));
+	};
 
 	const handleAddItem = (itemId: string) => {
 		if (itemId === NONE) return;
@@ -270,6 +301,39 @@ const ShoppingListForm = () => {
 								))}
 							</SelectContent>
 						</Select>
+					</div>
+
+					{/* Recipe import */}
+					<div className="space-y-1.5">
+						<Label>Import from Recipe</Label>
+						<div className="flex gap-2">
+							<Select
+								value={selectedRecipeId}
+								onValueChange={setSelectedRecipeId}
+								disabled={saving || importing}
+							>
+								<SelectTrigger className="flex-1">
+									<SelectValue placeholder="Select a recipe…" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value={NONE}>—</SelectItem>
+									{recipes.map((r) => (
+										<SelectItem key={r._id} value={r._id}>
+											{r.name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+							<Button
+								variant="outline"
+								size="sm"
+								className="shrink-0"
+								onClick={handleImportRecipe}
+								disabled={saving || importing || selectedRecipeId === NONE}
+							>
+								{importing ? "Importing…" : "Import"}
+							</Button>
+						</div>
 					</div>
 
 					{/* Item selector */}

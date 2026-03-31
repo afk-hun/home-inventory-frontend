@@ -107,3 +107,24 @@ export const deleteRecipe = (recipeId: string): Promise<void> => {
 		})
 		.catch((err) => { throw err; });
 };
+
+export interface IMissingIngredient {
+	item: { _id: string; name: string };
+	amount: number;
+	unit: string;
+}
+
+export const fetchMissingIngredients = (recipeId: string): Promise<IMissingIngredient[]> => {
+	return authFetch(SERVER_URL + "/recipe/recipes/" + recipeId + "/missing-ingredients", {
+		method: "GET",
+		headers: {
+			"Content-Type": "application/json",
+			...getCsrfHeaders(),
+		},
+	})
+		.then(async (res) => {
+			if (!res.ok) throw new Error(await extractErrorMessage(res));
+			return res.json();
+		})
+		.catch((err) => { throw err; });
+};

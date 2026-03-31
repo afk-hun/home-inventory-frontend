@@ -7,10 +7,11 @@ import { IItem } from "@/model/item";
 import { IStore } from "@/model/store";
 import { IUnitType } from "@/model/unitType";
 import { fetchShoppingList, createShoppingList, updateShoppingList } from "@/api/shoppingList";
-import { fetchItems } from "@/api/item";
+import { fetchItemsByStore } from "@/api/item";
 import { fetchStores } from "@/api/store";
 import { fetchUnitTypes } from "@/api/unitType";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,6 +26,7 @@ const NONE = "__none__";
 
 interface EditableItem extends IShoppingListItem {
 	_key: number;
+	checked: boolean;
 }
 
 let keyCounter = 0;
@@ -50,9 +52,6 @@ const ShoppingListForm = () => {
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
-		fetchItems()
-			.then(setAvailableItems)
-			.catch((err) => console.error(err));
 		fetchStores()
 			.then(setStores)
 			.catch((err) => console.error(err));
@@ -62,6 +61,17 @@ const ShoppingListForm = () => {
 	}, []);
 
 	useEffect(() => {
+		if (storeId === NONE) {
+			setAvailableItems([]);
+			setSelectedItemId(NONE);
+			return;
+		}
+		fetchItemsByStore(storeId)
+			.then(setAvailableItems)
+			.catch((err) => console.error(err));
+	}, [storeId]);
+
+	useEffect(() => {
 		if (!id) return;
 		setLoading(true);
 		setError(null);
@@ -69,7 +79,7 @@ const ShoppingListForm = () => {
 			.then((list) => {
 				setName(list.name);
 				setStoreId(list.storeId || NONE);
-				setItems(list.items.map((item) => ({ ...item, _key: nextKey() })));
+				setItems(list.items.map((item) => ({ ...item, _key: nextKey(), checked: false })));
 			})
 			.catch((err: Error) => setError(err.message))
 			.finally(() => setLoading(false));
@@ -81,7 +91,7 @@ const ShoppingListForm = () => {
 		if (!found) return;
 		setItems((prev) => [
 			...prev,
-			{ itemName: found.name, quantity: 1, unit: "", _key: nextKey() },
+			{ itemName: found.name, quantity: 1, unit: "", _key: nextKey(), checked: false },
 		]);
 		setSelectedItemId(NONE);
 	};
@@ -104,6 +114,17 @@ const ShoppingListForm = () => {
 				i._key === key ? { ...i, unit: value === NONE ? "" : value } : i,
 			),
 		);
+	};
+
+	const handleToggleChecked = (key: number) => {
+		setItems((prev) => {
+			const updated = prev.map((i) =>
+				i._key === key ? { ...i, checked: !i.checked } : i,
+			);
+			const unchecked = updated.filter((i) => !i.checked);
+			const checked = updated.filter((i) => i.checked);
+			return [...unchecked, ...checked];
+		});
 	};
 
 	const handleSave = () => {
@@ -204,7 +225,7 @@ const ShoppingListForm = () => {
 							setSelectedItemId(val);
 							handleAddItem(val);
 						}}
-						disabled={saving}
+						disabled={saving || storeId === NONE}
 					>
 						<SelectTrigger>
 							<SelectValue placeholder="Select an item to add…" />
@@ -234,8 +255,15 @@ const ShoppingListForm = () => {
 									key={item._key}
 									className="flex items-center gap-3 px-3 py-2"
 								>
+									{/* Checkbox */}
+									<Checkbox
+										checked={item.checked}
+										onCheckedChange={() => handleToggleChecked(item._key)}
+										disabled={saving}
+									/>
+
 									{/* Item name */}
-									<span className="min-w-0 flex-1 truncate text-sm font-medium">
+									<span className={`min-w-0 flex-1 truncate text-sm font-medium ${item.checked ? "text-muted-foreground line-through" : ""}`}>
 										{item.itemName}
 									</span>
 

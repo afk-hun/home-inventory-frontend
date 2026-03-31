@@ -33,6 +33,24 @@ export const fetchItems = (): Promise<IItem[]> => {
 		});
 };
 
+export const fetchItemsByStore = (storeId: string): Promise<IItem[]> => {
+	return authFetch(SERVER_URL + "/shelf/item?limit=100&storeId=" + encodeURIComponent(storeId), {
+		method: "GET",
+		headers: {
+			"Content-Type": "application/json",
+			...getCsrfHeaders(),
+		},
+	})
+		.then(async (res) => {
+			if (!res.ok) throw new Error(await extractErrorMessage(res));
+			return res.json();
+		})
+		.then((data) => data.items)
+		.catch((err) => {
+			throw err;
+		});
+};
+
 export const createItem = (name: string, type?: string): Promise<IItem> => {
 	return authFetch(SERVER_URL + "/shelf/item", {
 		method: "POST",

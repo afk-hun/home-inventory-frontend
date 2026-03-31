@@ -6,12 +6,23 @@ import { IShoppingListItem } from "@/model/shoppingList";
 import { IItem } from "@/model/item";
 import { IStore } from "@/model/store";
 import { IUnitType } from "@/model/unitType";
-import { fetchShoppingList, createShoppingList, updateShoppingList } from "@/api/shoppingList";
+import {
+	fetchShoppingList,
+	createShoppingList,
+	updateShoppingList,
+} from "@/api/shoppingList";
 import { fetchItemsByStore } from "@/api/item";
 import { fetchStores } from "@/api/store";
 import { fetchUnitTypes } from "@/api/unitType";
+import ItemSettingsSection from "@/components/settings/ItemSettingsSection";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -50,6 +61,7 @@ const ShoppingListForm = () => {
 	const [loading, setLoading] = useState<boolean>(false);
 	const [saving, setSaving] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
+	const [itemsDialogOpen, setItemsDialogOpen] = useState<boolean>(false);
 
 	useEffect(() => {
 		fetchStores()
@@ -79,7 +91,9 @@ const ShoppingListForm = () => {
 			.then((list) => {
 				setName(list.name);
 				setStoreId(list.storeId || NONE);
-				setItems(list.items.map((item) => ({ ...item, _key: nextKey(), checked: false })));
+				setItems(
+					list.items.map((item) => ({ ...item, _key: nextKey() })),
+				);
 			})
 			.catch((err: Error) => setError(err.message))
 			.finally(() => setLoading(false));
@@ -91,9 +105,24 @@ const ShoppingListForm = () => {
 		if (!found) return;
 		setItems((prev) => [
 			...prev,
-			{ itemName: found.name, quantity: 1, unit: "", _key: nextKey(), checked: false },
+			{
+				itemName: found.name,
+				quantity: 1,
+				unit: "",
+				_key: nextKey(),
+				checked: false,
+			},
 		]);
 		setSelectedItemId(NONE);
+	};
+
+	const handleItemsDialogChange = (dialogOpen: boolean) => {
+		setItemsDialogOpen(dialogOpen);
+		if (!dialogOpen && storeId !== NONE) {
+			fetchItemsByStore(storeId)
+				.then(setAvailableItems)
+				.catch((err) => console.error(err));
+		}
 	};
 
 	const handleRemoveItem = (key: number) => {
@@ -111,7 +140,9 @@ const ShoppingListForm = () => {
 	const handleUnitChange = (key: number, value: string) => {
 		setItems((prev) =>
 			prev.map((i) =>
-				i._key === key ? { ...i, unit: value === NONE ? "" : value } : i,
+				i._key === key
+					? { ...i, unit: value === NONE ? "" : value }
+					: i,
 			),
 		);
 	};
@@ -123,7 +154,22 @@ const ShoppingListForm = () => {
 			);
 			const unchecked = updated.filter((i) => !i.checked);
 			const checked = updated.filter((i) => i.checked);
-			return [...unchecked, ...checked];
+			const reordered = [...unchecked, ...checked];
+
+			if (!isNew && id) {
+				updateShoppingList(id, {
+					items: reordered.map(
+						({ itemName, quantity, unit, checked }) => ({
+							itemName,
+							quantity,
+							unit,
+							checked,
+						}),
+					),
+				}).catch((err: Error) => setError(err.message));
+			}
+
+			return reordered;
 		});
 	};
 
@@ -141,7 +187,12 @@ const ShoppingListForm = () => {
 		const payload = {
 			name: trimmedName,
 			storeId,
-			items: items.map(({ itemName, quantity, unit }) => ({ itemName, quantity, unit })),
+			items: items.map(({ itemName, quantity, unit, checked }) => ({
+				itemName,
+				quantity,
+				unit,
+				checked,
+			})),
 		};
 
 		setSaving(true);
@@ -169,170 +220,226 @@ const ShoppingListForm = () => {
 	}
 
 	return (
-		<div className="mx-auto w-full max-w-2xl px-4 py-8 md:py-10">
-			<div className="mb-6 space-y-1">
-				<h1 className="text-2xl font-semibold">
-					{isNew ? "New Shopping List" : "Edit Shopping List"}
-				</h1>
-				<p className="text-muted-foreground text-sm">
-					{isNew
-						? "Fill in the details to create a new shopping list."
-						: "Update the shopping list details below."}
-				</p>
-			</div>
-
-			<div className="space-y-5">
-				{/* Title */}
-				<div className="space-y-1.5">
-					<Label htmlFor="list-name">
-						Title <span className="text-destructive">*</span>
-					</Label>
-					<Input
-						id="list-name"
-						value={name}
-						onChange={(e) => setName(e.target.value)}
-						placeholder="e.g. Weekly Groceries"
-						disabled={saving}
-					/>
+		<>
+			<div className="mx-auto w-full max-w-2xl px-4 py-8 md:py-10">
+				<div className="mb-6 space-y-1">
+					<h1 className="text-2xl font-semibold">
+						{isNew ? "New Shopping List" : "Edit Shopping List"}
+					</h1>
+					<p className="text-muted-foreground text-sm">
+						{isNew
+							? "Fill in the details to create a new shopping list."
+							: "Update the shopping list details below."}
+					</p>
 				</div>
 
-				{/* Store */}
-				<div className="space-y-1.5">
-					<Label>
-						Store <span className="text-destructive">*</span>
-					</Label>
-					<Select value={storeId} onValueChange={setStoreId} disabled={saving}>
-						<SelectTrigger>
-							<SelectValue placeholder="Select a store" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value={NONE}>—</SelectItem>
-							{stores.map((s) => (
-								<SelectItem key={s._id} value={s._id}>
-									{s.name}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-				</div>
+				<div className="space-y-5">
+					{/* Title */}
+					<div className="space-y-1.5">
+						<Label htmlFor="list-name">
+							Title <span className="text-destructive">*</span>
+						</Label>
+						<Input
+							id="list-name"
+							value={name}
+							onChange={(e) => setName(e.target.value)}
+							placeholder="e.g. Weekly Groceries"
+							disabled={saving}
+						/>
+					</div>
 
-				{/* Item selector */}
-				<div className="space-y-1.5">
-					<Label>Add Item</Label>
-					<Select
-						value={selectedItemId}
-						onValueChange={(val) => {
-							setSelectedItemId(val);
-							handleAddItem(val);
-						}}
-						disabled={saving || storeId === NONE}
-					>
-						<SelectTrigger>
-							<SelectValue placeholder="Select an item to add…" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value={NONE}>—</SelectItem>
-							{availableItems.map((item) => (
-								<SelectItem key={item._id} value={item._id}>
-									{item.name}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-				</div>
+					{/* Store */}
+					<div className="space-y-1.5">
+						<Label>
+							Store <span className="text-destructive">*</span>
+						</Label>
+						<Select
+							value={storeId}
+							onValueChange={setStoreId}
+							disabled={saving}
+						>
+							<SelectTrigger>
+								<SelectValue placeholder="Select a store" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value={NONE}>—</SelectItem>
+								{stores.map((s) => (
+									<SelectItem key={s._id} value={s._id}>
+										{s.name}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</div>
 
-				{/* Items list */}
-				<div className="space-y-2">
-					<Label>Items</Label>
-					{items.length === 0 ? (
-						<div className="text-muted-foreground rounded-md border border-dashed p-4 text-center text-sm">
-							No items added yet.
+					{/* Item selector */}
+					<div className="space-y-1.5">
+						<Label>Add Item</Label>
+						<div className="flex gap-2">
+							<Select
+								value={selectedItemId}
+								onValueChange={(val) => {
+									setSelectedItemId(val);
+									handleAddItem(val);
+								}}
+								disabled={saving || storeId === NONE}
+							>
+								<SelectTrigger className="flex-1">
+									<SelectValue placeholder="Select an item to add…" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value={NONE}>—</SelectItem>
+									{availableItems.map((item) => (
+										<SelectItem
+											key={item._id}
+											value={item._id}
+										>
+											{item.name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+							<Button
+								variant="outline"
+								size="sm"
+								className="shrink-0"
+								onClick={() => setItemsDialogOpen(true)}
+								disabled={saving}
+							>
+								New
+							</Button>
 						</div>
-					) : (
-						<ul className="divide-y rounded-md border">
-							{items.map((item) => (
-								<li
-									key={item._key}
-									className="flex items-center gap-3 px-3 py-2"
-								>
-									{/* Checkbox */}
-									<Checkbox
-										checked={item.checked}
-										onCheckedChange={() => handleToggleChecked(item._key)}
-										disabled={saving}
-									/>
+					</div>
 
-									{/* Item name */}
-									<span className={`min-w-0 flex-1 truncate text-sm font-medium ${item.checked ? "text-muted-foreground line-through" : ""}`}>
-										{item.itemName}
-									</span>
-
-									{/* Quantity */}
-									<Input
-										type="number"
-										min="0"
-										step="any"
-										value={item.quantity === 0 ? "" : item.quantity}
-										onChange={(e) =>
-											handleQuantityChange(item._key, e.target.value)
-										}
-										className="w-20 shrink-0"
-										disabled={saving}
-									/>
-
-									{/* Unit */}
-									<Select
-										value={item.unit === "" ? NONE : item.unit}
-										onValueChange={(val) =>
-											handleUnitChange(item._key, val)
-										}
-										disabled={saving}
+					{/* Items list */}
+					<div className="space-y-2">
+						<Label>Items</Label>
+						{items.length === 0 ? (
+							<div className="text-muted-foreground rounded-md border border-dashed p-4 text-center text-sm">
+								No items added yet.
+							</div>
+						) : (
+							<ul className="divide-y rounded-md border">
+								{items.map((item) => (
+									<li
+										key={item._key}
+										className="flex items-center gap-3 px-3 py-2"
 									>
-										<SelectTrigger className="w-28 shrink-0">
-											<SelectValue placeholder="—" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value={NONE}>—</SelectItem>
-											{unitTypes.map((u) => (
-												<SelectItem key={u._id} value={u.name}>
-													{u.name}
+										{/* Checkbox */}
+										<Checkbox
+											checked={item.checked}
+											onCheckedChange={() =>
+												handleToggleChecked(item._key)
+											}
+											disabled={saving}
+										/>
+
+										{/* Item name */}
+										<span
+											className={`min-w-0 flex-1 truncate text-sm font-medium ${item.checked ? "text-muted-foreground line-through" : ""}`}
+										>
+											{item.itemName}
+										</span>
+
+										{/* Quantity */}
+										<Input
+											type="number"
+											min="0"
+											step="any"
+											value={
+												item.quantity === 0
+													? ""
+													: item.quantity
+											}
+											onChange={(e) =>
+												handleQuantityChange(
+													item._key,
+													e.target.value,
+												)
+											}
+											className="w-20 shrink-0"
+											disabled={saving}
+										/>
+
+										{/* Unit */}
+										<Select
+											value={
+												item.unit === ""
+													? NONE
+													: item.unit
+											}
+											onValueChange={(val) =>
+												handleUnitChange(item._key, val)
+											}
+											disabled={saving}
+										>
+											<SelectTrigger className="w-28 shrink-0">
+												<SelectValue placeholder="—" />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value={NONE}>
+													—
 												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
+												{unitTypes.map((u) => (
+													<SelectItem
+														key={u._id}
+														value={u.name}
+													>
+														{u.name}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
 
-									{/* Remove */}
-									<Button
-										variant="ghost"
-										size="sm"
-										className="h-7 w-7 shrink-0 p-0 text-muted-foreground hover:text-destructive"
-										onClick={() => handleRemoveItem(item._key)}
-										disabled={saving}
-									>
-										<Trash2 className="h-3.5 w-3.5" />
-									</Button>
-								</li>
-							))}
-						</ul>
+										{/* Remove */}
+										<Button
+											variant="ghost"
+											size="sm"
+											className="h-7 w-7 shrink-0 p-0 text-muted-foreground hover:text-destructive"
+											onClick={() =>
+												handleRemoveItem(item._key)
+											}
+											disabled={saving}
+										>
+											<Trash2 className="h-3.5 w-3.5" />
+										</Button>
+									</li>
+								))}
+							</ul>
+						)}
+					</div>
+
+					{error && (
+						<p className="text-destructive text-sm">{error}</p>
 					)}
-				</div>
 
-				{error && <p className="text-destructive text-sm">{error}</p>}
-
-				<div className="flex gap-3 pt-2">
-					<Button onClick={handleSave} disabled={saving}>
-						{saving ? "Saving…" : "Save"}
-					</Button>
-					<Button
-						variant="outline"
-						onClick={() => navigate("/shopping-lists")}
-						disabled={saving}
-					>
-						Cancel
-					</Button>
+					<div className="flex gap-3 pt-2">
+						<Button onClick={handleSave} disabled={saving}>
+							{saving ? "Saving…" : "Save"}
+						</Button>
+						<Button
+							variant="outline"
+							onClick={() => navigate("/shopping-lists")}
+							disabled={saving}
+						>
+							Cancel
+						</Button>
+					</div>
 				</div>
 			</div>
-		</div>
+
+			<Dialog
+				open={itemsDialogOpen}
+				onOpenChange={handleItemsDialogChange}
+			>
+				<DialogContent className="max-w-lg">
+					<DialogHeader>
+						<DialogTitle>Manage Items</DialogTitle>
+					</DialogHeader>
+					<ItemSettingsSection />
+				</DialogContent>
+			</Dialog>
+		</>
 	);
 };
 

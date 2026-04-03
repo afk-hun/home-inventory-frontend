@@ -11,7 +11,6 @@ import HouseholdSettingsSection from "@/components/settings/HouseholdSettingsSec
 import ItemTypeSettingsSection from "@/components/settings/ItemTypeSettingsSection";
 import ShelfTypeSettingsSection from "@/components/settings/ShelfTypeSettingsSection";
 import ShelfPlaceTypeSettingsSection from "@/components/settings/ShelfPlaceTypeSettingsSection";
-import UnitTypeSettingsSection from "@/components/settings/UnitTypeSettingsSection";
 import ItemSettingsSection from "@/components/settings/ItemSettingsSection";
 import RecipeTypeSettingsSection from "@/components/settings/RecipeTypeSettingsSection";
 import MealTypeSettingsSection from "@/components/settings/MealTypeSettingsSection";
@@ -53,12 +52,6 @@ const sections = [
 		title: "Shelf Places",
 		description: "Set shelf place defaults.",
 		component: <ShelfPlaceTypeSettingsSection />,
-	},
-	{
-		key: "units",
-		title: "Units",
-		description: "Set unit defaults.",
-		component: <UnitTypeSettingsSection />,
 	},
 	{
 		key: "recipeTypes",

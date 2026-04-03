@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 
 import { IItem } from "@/model/item";
-import { IUnitType } from "@/model/unitType";
 import { IIngredient } from "@/model/recipe";
 import { fetchItems } from "@/api/item";
-import { fetchUnitTypes } from "@/api/unitType";
+import { UNIT_GROUPS } from "@/lib/units";
 import ItemSettingsSection from "@/components/settings/ItemSettingsSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +18,9 @@ import {
 import {
 	Select,
 	SelectContent,
+	SelectGroup,
 	SelectItem,
+	SelectLabel,
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
@@ -34,7 +35,6 @@ interface AddIngredientDialogProps {
 
 const AddIngredientDialog = ({ open, onOpenChange, onAdd }: AddIngredientDialogProps) => {
 	const [availableItems, setAvailableItems] = useState<IItem[]>([]);
-	const [unitTypes, setUnitTypes] = useState<IUnitType[]>([]);
 	const [selectedItemId, setSelectedItemId] = useState<string>(NONE);
 	const [quantity, setQuantity] = useState<string>("");
 	const [unit, setUnit] = useState<string>(NONE);
@@ -44,9 +44,6 @@ const AddIngredientDialog = ({ open, onOpenChange, onAdd }: AddIngredientDialogP
 	useEffect(() => {
 		fetchItems()
 			.then(setAvailableItems)
-			.catch((err) => console.error(err));
-		fetchUnitTypes()
-			.then(setUnitTypes)
 			.catch((err) => console.error(err));
 	}, []);
 
@@ -145,10 +142,15 @@ const AddIngredientDialog = ({ open, onOpenChange, onAdd }: AddIngredientDialogP
 								</SelectTrigger>
 								<SelectContent>
 									<SelectItem value={NONE}>—</SelectItem>
-									{unitTypes.map((u) => (
-										<SelectItem key={u._id} value={u.name}>
-											{u.name}
-										</SelectItem>
+									{UNIT_GROUPS.map((group) => (
+										<SelectGroup key={group.label}>
+											<SelectLabel>{group.label}</SelectLabel>
+											{group.units.map((u) => (
+												<SelectItem key={u} value={u}>
+													{u}
+												</SelectItem>
+											))}
+										</SelectGroup>
 									))}
 								</SelectContent>
 							</Select>

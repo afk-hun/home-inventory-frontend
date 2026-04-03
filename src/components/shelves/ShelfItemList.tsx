@@ -2,16 +2,17 @@ import { useState, useEffect } from "react";
 import { Pencil, Trash2, Check, Undo2 } from "lucide-react";
 
 import { IShelfItem } from "@/model/shelf";
-import { IUnitType } from "@/model/unitType";
 import { fetchShelf, addShelfItem, removeShelfItem } from "@/api/shelf";
-import { fetchUnitTypes } from "@/api/unitType";
+import { UNIT_GROUPS } from "@/lib/units";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
 	Select,
 	SelectContent,
+	SelectGroup,
 	SelectItem,
+	SelectLabel,
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
@@ -27,7 +28,6 @@ interface ShelfItemListProps {
 
 const ShelfItemList = ({ shelfId, refreshKey, moveMode = false, onMoveSelectionChange }: ShelfItemListProps) => {
 	const [items, setItems] = useState<IShelfItem[]>([]);
-	const [unitTypes, setUnitTypes] = useState<IUnitType[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -36,12 +36,6 @@ const ShelfItemList = ({ shelfId, refreshKey, moveMode = false, onMoveSelectionC
 	const [editUnit, setEditUnit] = useState<string>(NONE);
 	const [moveSelectedIds, setMoveSelectedIds] = useState<string[]>([]);
 	const [searchQuery, setSearchQuery] = useState<string>("");
-
-	useEffect(() => {
-		fetchUnitTypes()
-			.then(setUnitTypes)
-			.catch((err) => console.error(err));
-	}, []);
 
 	useEffect(() => {
 		if (!shelfId) {
@@ -174,10 +168,15 @@ const ShelfItemList = ({ shelfId, refreshKey, moveMode = false, onMoveSelectionC
 										</SelectTrigger>
 										<SelectContent>
 											<SelectItem value={NONE}>—</SelectItem>
-											{unitTypes.map((u) => (
-												<SelectItem key={u._id} value={u.name}>
-													{u.name}
-												</SelectItem>
+											{UNIT_GROUPS.map((group) => (
+												<SelectGroup key={group.label}>
+													<SelectLabel>{group.label}</SelectLabel>
+													{group.units.map((u) => (
+														<SelectItem key={u} value={u}>
+															{u}
+														</SelectItem>
+													))}
+												</SelectGroup>
 											))}
 										</SelectContent>
 									</Select>

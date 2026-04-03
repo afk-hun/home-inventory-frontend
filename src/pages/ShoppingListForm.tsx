@@ -6,7 +6,6 @@ import { IShoppingListItem } from "@/model/shoppingList";
 import { IItem } from "@/model/item";
 import { IRecipe } from "@/model/recipe";
 import { IStore } from "@/model/store";
-import { IUnitType } from "@/model/unitType";
 import {
 	fetchShoppingList,
 	createShoppingList,
@@ -15,7 +14,7 @@ import {
 import { fetchItemsByStore } from "@/api/item";
 import { fetchRecipes, fetchMissingIngredients } from "@/api/recipe";
 import { fetchStores } from "@/api/store";
-import { fetchUnitTypes } from "@/api/unitType";
+import { UNIT_GROUPS } from "@/lib/units";
 import ItemSettingsSection from "@/components/settings/ItemSettingsSection";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,7 +29,9 @@ import { Label } from "@/components/ui/label";
 import {
 	Select,
 	SelectContent,
+	SelectGroup,
 	SelectItem,
+	SelectLabel,
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
@@ -56,7 +57,6 @@ const ShoppingListForm = () => {
 
 	const [availableItems, setAvailableItems] = useState<IItem[]>([]);
 	const [stores, setStores] = useState<IStore[]>([]);
-	const [unitTypes, setUnitTypes] = useState<IUnitType[]>([]);
 
 	const [selectedItemId, setSelectedItemId] = useState<string>(NONE);
 
@@ -72,9 +72,6 @@ const ShoppingListForm = () => {
 	useEffect(() => {
 		fetchStores()
 			.then(setStores)
-			.catch((err) => console.error(err));
-		fetchUnitTypes()
-			.then(setUnitTypes)
 			.catch((err) => console.error(err));
 		fetchRecipes()
 			.then(setRecipes)
@@ -441,16 +438,16 @@ const ShoppingListForm = () => {
 												<SelectValue placeholder="—" />
 											</SelectTrigger>
 											<SelectContent>
-												<SelectItem value={NONE}>
-													—
-												</SelectItem>
-												{unitTypes.map((u) => (
-													<SelectItem
-														key={u._id}
-														value={u.name}
-													>
-														{u.name}
-													</SelectItem>
+												<SelectItem value={NONE}>—</SelectItem>
+												{UNIT_GROUPS.map((group) => (
+													<SelectGroup key={group.label}>
+														<SelectLabel>{group.label}</SelectLabel>
+														{group.units.map((u) => (
+															<SelectItem key={u} value={u}>
+																{u}
+															</SelectItem>
+														))}
+													</SelectGroup>
 												))}
 											</SelectContent>
 										</Select>

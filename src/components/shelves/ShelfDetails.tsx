@@ -5,12 +5,11 @@ import { IShelf } from "@/model/shelf";
 import { IShelfType } from "@/model/shelfType";
 import { IShelfPlaceType } from "@/model/shelfPlaceType";
 import { IItem } from "@/model/item";
-import { IUnitType } from "@/model/unitType";
 import { fetchShelfTypes } from "@/api/shelfType";
 import { fetchShelfPlaceTypes } from "@/api/shelfPlaceType";
 import { fetchItems } from "@/api/item";
-import { fetchUnitTypes } from "@/api/unitType";
 import { fetchShelf, updateShelf, addShelfItem, fetchShelves } from "@/api/shelf";
+import { UNIT_GROUPS } from "@/lib/units";
 import ItemSettingsSection from "@/components/settings/ItemSettingsSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +24,9 @@ import {
 import {
 	Select,
 	SelectContent,
+	SelectGroup,
 	SelectItem,
+	SelectLabel,
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
@@ -66,7 +67,6 @@ const ShelfDetails = ({
 
 	// Add item state
 	const [availableItems, setAvailableItems] = useState<IItem[]>([]);
-	const [unitTypes, setUnitTypes] = useState<IUnitType[]>([]);
 	const [addDialogOpen, setAddDialogOpen] = useState(false);
 	const [selectedItemId, setSelectedItemId] = useState<string>(NONE);
 	const [addQuantity, setAddQuantity] = useState<string>("");
@@ -89,9 +89,6 @@ const ShelfDetails = ({
 			.catch((err) => console.error(err));
 		fetchItems()
 			.then(setAvailableItems)
-			.catch((err) => console.error(err));
-		fetchUnitTypes()
-			.then(setUnitTypes)
 			.catch((err) => console.error(err));
 	}, []);
 
@@ -424,10 +421,15 @@ const ShelfDetails = ({
 								</SelectTrigger>
 								<SelectContent>
 									<SelectItem value={NONE}>—</SelectItem>
-									{unitTypes.map((u) => (
-										<SelectItem key={u._id} value={u.name}>
-											{u.name}
-										</SelectItem>
+									{UNIT_GROUPS.map((group) => (
+										<SelectGroup key={group.label}>
+											<SelectLabel>{group.label}</SelectLabel>
+											{group.units.map((u) => (
+												<SelectItem key={u} value={u}>
+													{u}
+												</SelectItem>
+											))}
+										</SelectGroup>
 									))}
 								</SelectContent>
 							</Select>

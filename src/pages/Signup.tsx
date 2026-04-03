@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -216,6 +217,12 @@ export default function Signup() {
 							{isLoading ? "Signing up..." : "Sign Up"}
 						</Button>
 					</form>
+					<p className="mt-4 text-center text-sm text-muted-foreground">
+						Already have an account?{" "}
+						<Link to="/login" className="text-foreground underline underline-offset-4 hover:text-primary">
+							Log in
+						</Link>
+					</p>
 				</CardContent>
 			</Card>
 		</div>

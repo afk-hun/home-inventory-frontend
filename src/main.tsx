@@ -37,6 +37,16 @@ function IndexRoute() {
 	return <Welcome />;
 }
 
+function ProtectedRoute() {
+	const { isLoggedIn } = useLogin();
+
+	if (!isLoggedIn) {
+		return <Navigate to="/login" replace />;
+	}
+
+	return <Outlet />;
+}
+
 function RootLayout() {
 	const { isLoggedIn } = useLogin();
 
@@ -68,10 +78,6 @@ let router = createBrowserRouter([
 				Component: IndexRoute,
 			},
 			{
-				path: "dashboard",
-				Component: Dashboard,
-			},
-			{
 				path: "signup",
 				Component: Signup,
 			},
@@ -80,52 +86,61 @@ let router = createBrowserRouter([
 				Component: Login,
 			},
 			{
-				path: "settings",
-				Component: Settings,
-			},
-			{
-				path: "shelves",
-				Component: Shelves,
-			},
-			{
-				path: "shops",
-				Component: Shops,
-			},
-			{
-				path: "shopping-lists",
-				Component: ShoppingLists,
-			},
-			{
-				path: "shopping-lists/new",
-				Component: ShoppingListForm,
-			},
-			{
-				path: "shopping-lists/:id",
-				Component: ShoppingListForm,
-			},
-			{
-				path: "recipes",
-				Component: Recipes,
-			},
-			{
-				path: "recipes/new",
-				Component: RecipeForm,
-			},
-			{
-				path: "recipes/:id",
-				Component: RecipeForm,
-			},
-			{
-				path: "meal-plans",
-				Component: MealPlans,
-			},
-			{
-				path: "meal-plans/meal/new",
-				Component: MealForm,
-			},
-			{
-				path: "meal-plans/meal/:mealId/edit",
-				Component: MealForm,
+				Component: ProtectedRoute,
+				children: [
+					{
+						path: "dashboard",
+						Component: Dashboard,
+					},
+					{
+						path: "settings",
+						Component: Settings,
+					},
+					{
+						path: "shelves",
+						Component: Shelves,
+					},
+					{
+						path: "shops",
+						Component: Shops,
+					},
+					{
+						path: "shopping-lists",
+						Component: ShoppingLists,
+					},
+					{
+						path: "shopping-lists/new",
+						Component: ShoppingListForm,
+					},
+					{
+						path: "shopping-lists/:id",
+						Component: ShoppingListForm,
+					},
+					{
+						path: "recipes",
+						Component: Recipes,
+					},
+					{
+						path: "recipes/new",
+						Component: RecipeForm,
+					},
+					{
+						path: "recipes/:id",
+						Component: RecipeForm,
+					},
+					{
+						path: "meal-plans",
+						Component: MealPlans,
+					},
+					{
+						path: "meal-plans/meal/new",
+						Component: MealForm,
+					},
+					{
+						path: "meal-plans/meal/:mealId/edit",
+						Component: MealForm,
+					},
+				],
 			},
 		],
 	},

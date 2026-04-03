@@ -1,6 +1,6 @@
 import { getCsrfHeaders } from "@/lib/csrf";
 import { authFetch } from "@/lib/auth-fetch";
-import { IConnectedStore, IItem } from "@/model/item";
+import { IShoppingList, IShoppingListItem } from "@/model/shoppingList";
 import { SERVER_URL } from "@/utils/constAndTypes";
 
 const extractErrorMessage = async (res: Response): Promise<string> => {
@@ -15,8 +15,8 @@ const extractErrorMessage = async (res: Response): Promise<string> => {
 	return "Request failed.";
 };
 
-export const fetchItems = (): Promise<IItem[]> => {
-	return authFetch(SERVER_URL + "/shelf/item?limit=100", {
+export const fetchShoppingLists = (): Promise<IShoppingList[]> => {
+	return authFetch(SERVER_URL + "/shopping-list/shopping-list", {
 		method: "GET",
 		headers: {
 			"Content-Type": "application/json",
@@ -27,14 +27,12 @@ export const fetchItems = (): Promise<IItem[]> => {
 			if (!res.ok) throw new Error(await extractErrorMessage(res));
 			return res.json();
 		})
-		.then((data) => data.items)
-		.catch((err) => {
-			throw err;
-		});
+		.then((data) => data.shoppingLists)
+		.catch((err) => { throw err; });
 };
 
-export const fetchItemsByStore = (storeId: string): Promise<IItem[]> => {
-	return authFetch(SERVER_URL + "/shelf/item?limit=100&storeId=" + encodeURIComponent(storeId), {
+export const fetchShoppingList = (shoppingListId: string): Promise<IShoppingList> => {
+	return authFetch(SERVER_URL + "/shopping-list/shopping-list/" + shoppingListId, {
 		method: "GET",
 		headers: {
 			"Content-Type": "application/json",
@@ -45,66 +43,62 @@ export const fetchItemsByStore = (storeId: string): Promise<IItem[]> => {
 			if (!res.ok) throw new Error(await extractErrorMessage(res));
 			return res.json();
 		})
-		.then((data) => data.items)
-		.catch((err) => {
-			throw err;
-		});
+		.then((data) => data.shoppingList)
+		.catch((err) => { throw err; });
 };
 
-export const createItem = (name: string, type?: string): Promise<IItem> => {
-	return authFetch(SERVER_URL + "/shelf/item", {
+export const createShoppingList = (payload: {
+	name: string;
+	storeId: string;
+	items: IShoppingListItem[];
+}): Promise<IShoppingList> => {
+	return authFetch(SERVER_URL + "/shopping-list/shopping-list", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
 			...getCsrfHeaders(),
 		},
-		body: JSON.stringify({ name, ...(type ? { type } : {}) }),
+		body: JSON.stringify(payload),
 	})
 		.then(async (res) => {
 			if (!res.ok) throw new Error(await extractErrorMessage(res));
 			return res.json();
 		})
-		.then((data) => data.item)
-		.catch((err) => {
-			throw err;
-		});
+		.then((data) => data.shoppingList)
+		.catch((err) => { throw err; });
 };
 
-export const updateItem = (
-	itemId: string,
-	updates: { name?: string; type?: string | null; connectedStores?: IConnectedStore[] },
-): Promise<IItem> => {
-	return authFetch(SERVER_URL + "/shelf/item", {
+export const updateShoppingList = (
+	shoppingListId: string,
+	payload: { name?: string; storeId?: string; items?: IShoppingListItem[] },
+): Promise<IShoppingList> => {
+	return authFetch(SERVER_URL + "/shopping-list/shopping-list", {
 		method: "PATCH",
 		headers: {
 			"Content-Type": "application/json",
 			...getCsrfHeaders(),
 		},
-		body: JSON.stringify({ itemId, ...updates }),
+		body: JSON.stringify({ shoppingListId, ...payload }),
 	})
 		.then(async (res) => {
 			if (!res.ok) throw new Error(await extractErrorMessage(res));
 			return res.json();
 		})
-		.then((data) => data.item)
-		.catch((err) => {
-			throw err;
-		});
+		.then((data) => data.shoppingList)
+		.catch((err) => { throw err; });
 };
 
-export const deleteItem = (itemId: string): Promise<void> => {
-	return authFetch(SERVER_URL + "/shelf/item", {
+export const deleteShoppingList = (shoppingListId: string): Promise<void> => {
+	return authFetch(SERVER_URL + "/shopping-list/shopping-list", {
 		method: "DELETE",
 		headers: {
 			"Content-Type": "application/json",
 			...getCsrfHeaders(),
 		},
-		body: JSON.stringify({ itemId }),
+		body: JSON.stringify({ shoppingListId }),
 	})
 		.then(async (res) => {
 			if (!res.ok) throw new Error(await extractErrorMessage(res));
 		})
-		.catch((err) => {
-			throw err;
-		});
+		.catch((err) => { throw err; });
 };

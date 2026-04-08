@@ -1,4 +1,4 @@
-import { StrictMode } from "react";
+import { StrictMode, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 
@@ -8,24 +8,25 @@ import {
 	Outlet,
 	RouterProvider,
 } from "react-router";
-import Dashboard from "./pages/Dashboard.tsx";
-import Signup from "./pages/Signup.tsx";
-import Login from "./pages/Login.tsx";
 import { LoginProvider, useLogin } from "./contexts/login-context.tsx";
-import Welcome from "./pages/Welcome.tsx";
-import Settings from "./pages/Settings.tsx";
-import Shelves from "./pages/Shelves.tsx";
-import Shops from "./pages/Shops.tsx";
-import ShoppingLists from "./pages/ShoppingLists.tsx";
-import ShoppingListForm from "./pages/ShoppingListForm.tsx";
-import Recipes from "./pages/Recipes.tsx";
-import RecipeForm from "./pages/RecipeForm.tsx";
-import MealPlans from "./pages/MealPlans.tsx";
-import MealForm from "./pages/MealForm.tsx";
 import { HouseholdProvider } from "./contexts/household-context.tsx";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "./components/ui/sidebar.tsx";
 import { AppSidebar } from "./components/AppSidebar.tsx";
 import HouseholdSelect from "./components/HouseholdSelect.tsx";
+
+const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
+const Signup = lazy(() => import("./pages/Signup.tsx"));
+const Login = lazy(() => import("./pages/Login.tsx"));
+const Welcome = lazy(() => import("./pages/Welcome.tsx"));
+const Settings = lazy(() => import("./pages/Settings.tsx"));
+const Shelves = lazy(() => import("./pages/Shelves.tsx"));
+const Shops = lazy(() => import("./pages/Shops.tsx"));
+const ShoppingLists = lazy(() => import("./pages/ShoppingLists.tsx"));
+const ShoppingListForm = lazy(() => import("./pages/ShoppingListForm.tsx"));
+const Recipes = lazy(() => import("./pages/Recipes.tsx"));
+const RecipeForm = lazy(() => import("./pages/RecipeForm.tsx"));
+const MealPlans = lazy(() => import("./pages/MealPlans.tsx"));
+const MealForm = lazy(() => import("./pages/MealForm.tsx"));
 
 function IndexRoute() {
 	const { isLoggedIn } = useLogin();
@@ -62,7 +63,9 @@ function RootLayout() {
 						</div>
 					</div>
 				)}
-				<Outlet />
+				<Suspense fallback={null}>
+					<Outlet />
+				</Suspense>
 			</SidebarInset>
 		</SidebarProvider>
 	);

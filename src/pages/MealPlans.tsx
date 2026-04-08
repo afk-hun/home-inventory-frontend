@@ -1,18 +1,30 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { format, startOfMonth, endOfMonth, isSameDay } from "date-fns";
-import { ChevronLeft, ChevronRight, Plus, Pencil, BookOpen } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Pencil, BookOpen, CheckCheck } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { fetchSchedules, createSchedule } from "@/api/cookingSchedule";
 import { fetchRecipes } from "@/api/recipe";
 import { fetchMealTypes } from "@/api/mealType";
+import { consumeRecipeIngredients } from "@/api/shelf";
 import { ICookingSchedule, IMeal } from "@/model/cookingSchedule";
 import { IRecipe } from "@/model/recipe";
 import { IMealType } from "@/model/mealType";
+import { cn } from "@/lib/utils";
 
 const MealPlans = () => {
 	const navigate = useNavigate();
@@ -25,6 +37,8 @@ const MealPlans = () => {
 	const [recipes, setRecipes] = useState<IRecipe[]>([]);
 	const [mealTypes, setMealTypes] = useState<IMealType[]>([]);
 	const [loading, setLoading] = useState(false);
+	const [consuming, setConsuming] = useState<string | null>(null);
+	const [pendingMeal, setPendingMeal] = useState<{ mealId: string; recipeId: string } | null>(null);
 
 	useEffect(() => {
 		fetchRecipes().then(setRecipes).catch(console.error);
@@ -83,6 +97,32 @@ const MealPlans = () => {
 		);
 	};
 
+	const handleConsumeClick = (e: React.MouseEvent, meal: IMeal) => {
+		e.stopPropagation();
+		if (!meal._id) return;
+		setPendingMeal({ mealId: meal._id, recipeId: meal.recipe });
+	};
+
+	const handleConsumeConfirm = () => {
+		if (!pendingMeal) return;
+		const { mealId, recipeId } = pendingMeal;
+		setConsuming(mealId);
+		consumeRecipeIngredients(recipeId, mealId)
+			.then(() => {
+				setSchedule((prev) => {
+					if (!prev) return prev;
+					return {
+						...prev,
+						meals: prev.meals.map((m) =>
+							m._id === mealId ? { ...m, done: true } : m,
+						),
+					};
+				});
+			})
+			.catch(console.error)
+			.finally(() => setConsuming(null));
+	};
+
 	const handleEditMeal = (meal: IMeal) => {
 		if (!schedule || !meal._id) return;
 		navigate(`/meal-plans/meal/${meal._id}/edit?scheduleId=${schedule._id}`);
@@ -95,6 +135,21 @@ const MealPlans = () => {
 		: null;
 
 	return (
+		<>
+		<AlertDialog open={!!pendingMeal} onOpenChange={(open) => { if (!open) setPendingMeal(null); }}>
+			<AlertDialogContent size="sm">
+				<AlertDialogHeader>
+					<AlertDialogTitle>Mark meal as done?</AlertDialogTitle>
+					<AlertDialogDescription>
+						This will remove the recipe's ingredients from your shelves and mark the meal as completed.
+					</AlertDialogDescription>
+				</AlertDialogHeader>
+				<AlertDialogFooter>
+					<AlertDialogCancel>Cancel</AlertDialogCancel>
+					<AlertDialogAction onClick={handleConsumeConfirm}>Yes, mark as done</AlertDialogAction>
+				</AlertDialogFooter>
+			</AlertDialogContent>
+		</AlertDialog>
 		<div className="mx-auto w-full max-w-4xl px-4 py-8 md:py-10">
 			<div className="mb-6 space-y-1">
 				<h1 className="text-2xl font-semibold">Meal Plans</h1>
@@ -164,10 +219,10 @@ const MealPlans = () => {
 							>
 								<CardContent className="flex items-center justify-between p-4">
 									<div>
-										<p className="font-medium">
+										<p className={cn("font-medium", meal.done && "text-muted-foreground line-through")}>
 											{recipeMap[meal.recipe] ?? "Unknown recipe"}
 										</p>
-										<p className="text-sm text-muted-foreground">
+										<p className={cn("text-sm text-muted-foreground", meal.done && "line-through")}>
 											{mealTypeMap[meal.mealType] ?? "Unknown type"}
 											{" · "}
 											{meal.portion} portion
@@ -190,6 +245,15 @@ const MealPlans = () => {
 										>
 											<BookOpen className="h-4 w-4 text-muted-foreground" />
 										</Button>
+										<Button
+											variant="ghost"
+											size="icon"
+											disabled={meal.done || consuming === meal._id}
+											onClick={(e) => handleConsumeClick(e, meal)}
+											title="Mark as done — remove ingredients from shelves"
+										>
+											<CheckCheck className={cn("h-4 w-4", meal.done ? "text-green-500" : "text-muted-foreground")} />
+										</Button>
 										<Pencil className="h-4 w-4 text-muted-foreground" />
 									</div>
 								</CardContent>
@@ -199,6 +263,7 @@ const MealPlans = () => {
 				)}
 			</div>
 		</div>
+		</>
 	);
 };
 

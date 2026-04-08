@@ -5,6 +5,7 @@ export interface IMeal {
 	mealType: string;
 	recipe: string;
 	portion: number;
+	done: boolean;
 }
 
 export interface ICookingSchedule {

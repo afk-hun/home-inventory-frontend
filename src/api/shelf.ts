@@ -135,6 +135,27 @@ export const removeShelfItem = (
 		});
 };
 
+export const consumeRecipeIngredients = (
+	recipeId: string,
+	mealId: string,
+): Promise<{ removed: number; updated: number }> => {
+	return authFetch(SERVER_URL + "/shelf/shelf/consume-recipe", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			...getCsrfHeaders(),
+		},
+		body: JSON.stringify({ recipeId, mealId }),
+	})
+		.then(async (res) => {
+			if (!res.ok) throw new Error(await extractErrorMessage(res));
+			return res.json();
+		})
+		.catch((err) => {
+			throw err;
+		});
+};
+
 export const deleteShelf = (shelfId: string): Promise<void> => {
 	return authFetch(SERVER_URL + "/shelf/shelf", {
 		method: "DELETE",

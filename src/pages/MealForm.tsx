@@ -82,6 +82,7 @@ const MealForm = () => {
 			portion,
 			start: new Date(startDate).toISOString(),
 			end: new Date(endDate).toISOString(),
+			done: false,
 		};
 
 		const updatedMeals: IMeal[] = isEdit

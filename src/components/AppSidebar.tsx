@@ -24,6 +24,7 @@ import {
 	SidebarMenuItem,
 	SidebarRail,
 	SidebarSeparator,
+	useSidebar,
 } from "@/components/ui/sidebar";
 import {
 	Dialog,
@@ -47,6 +48,7 @@ const navItems = [
 export function AppSidebar() {
 	const { setIsLoggedIn } = useLogin();
 	const navigate = useNavigate();
+	const { setOpenMobile } = useSidebar();
 	const serverUrl = import.meta.env.VITE_SERVER_URL;
 	const [feedbackOpen, setFeedbackOpen] = useState(false);
 
@@ -94,7 +96,7 @@ export function AppSidebar() {
 							{navItems.map((item) => (
 								<SidebarMenuItem key={item.label}>
 									<SidebarMenuButton asChild tooltip={item.label}>
-										<NavLink to={item.href}>
+									<NavLink to={item.href} onClick={() => setOpenMobile(false)}>
 											<item.icon />
 											<span>{item.label}</span>
 										</NavLink>
@@ -117,7 +119,7 @@ export function AppSidebar() {
 					</SidebarMenuItem>
 					<SidebarMenuItem>
 						<SidebarMenuButton asChild tooltip="Settings">
-							<NavLink to="/settings">
+							<NavLink to="/settings" onClick={() => setOpenMobile(false)}>
 								<Settings />
 								<span>Settings</span>
 							</NavLink>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
-import { Trash2 } from "lucide-react";
+import { Trash2, ShoppingCart } from "lucide-react";
 
 import { IShoppingListItem } from "@/model/shoppingList";
 import { IItem } from "@/model/item";
@@ -11,6 +11,7 @@ import {
 	createShoppingList,
 	updateShoppingList,
 } from "@/api/shoppingList";
+import { addCheckedToShoppingBag } from "@/api/shelf";
 import { fetchItemsByStore } from "@/api/item";
 import { fetchRecipes, fetchMissingIngredients } from "@/api/recipe";
 import { fetchStores } from "@/api/store";
@@ -66,8 +67,11 @@ const ShoppingListForm = () => {
 
 	const [loading, setLoading] = useState<boolean>(false);
 	const [saving, setSaving] = useState<boolean>(false);
+	const [addingToBag, setAddingToBag] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
 	const [itemsDialogOpen, setItemsDialogOpen] = useState<boolean>(false);
+
+	const checkedCount = items.filter((i) => i.checked).length;
 
 	useEffect(() => {
 		fetchStores()
@@ -472,6 +476,30 @@ const ShoppingListForm = () => {
 
 					{error && (
 						<p className="text-destructive text-sm">{error}</p>
+					)}
+
+					{!isNew && (
+						<Button
+							variant="outline"
+							onClick={() => {
+								if (!id) return;
+								setAddingToBag(true);
+								setError(null);
+								addCheckedToShoppingBag(id)
+									.then(() =>
+										fetchShoppingList(id).then((list) =>
+											setItems(list.items.map((item) => ({ ...item, _key: nextKey() }))),
+										),
+									)
+									.catch((err: Error) => setError(err.message))
+									.finally(() => setAddingToBag(false));
+							}}
+							disabled={checkedCount === 0 || addingToBag || saving}
+							className="w-full"
+						>
+							<ShoppingCart className="h-4 w-4" />
+							{addingToBag ? "Moving…" : `Add checked items to shopping bag (${checkedCount})`}
+						</Button>
 					)}
 
 					<div className="flex gap-3 pt-2">

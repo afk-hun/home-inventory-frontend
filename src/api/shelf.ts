@@ -172,3 +172,23 @@ export const deleteShelf = (shelfId: string): Promise<void> => {
 			throw err;
 		});
 };
+
+export const addCheckedToShoppingBag = (
+	shoppingListId: string,
+): Promise<{ movedCount: number }> => {
+	return authFetch(SERVER_URL + "/shelf/shelf/add-to-bag", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			...getCsrfHeaders(),
+		},
+		body: JSON.stringify({ shoppingListId }),
+	})
+		.then(async (res) => {
+			if (!res.ok) throw new Error(await extractErrorMessage(res));
+			return res.json();
+		})
+		.catch((err) => {
+			throw err;
+		});
+};

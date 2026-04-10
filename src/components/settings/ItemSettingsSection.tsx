@@ -97,6 +97,7 @@ const ItemSettingsSection = () => {
 					))}
 				</div>
 			)}
+			<div className="pb-1" />
 		</div>
 	);
 };

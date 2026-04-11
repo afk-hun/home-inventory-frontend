@@ -385,7 +385,7 @@ const ShoppingListForm = () => {
 							</div>
 						) : (
 							<ul className="divide-y rounded-md border">
-								{items.map((item) => (
+								{[...items].sort((a, b) => a.itemName.localeCompare(b.itemName)).map((item) => (
 									<li
 										key={item._key}
 										className="flex items-center gap-3 px-3 py-2"

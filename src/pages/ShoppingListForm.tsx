@@ -521,11 +521,13 @@ const ShoppingListForm = () => {
 				open={itemsDialogOpen}
 				onOpenChange={handleItemsDialogChange}
 			>
-				<DialogContent className="max-w-lg">
+				<DialogContent className="max-w-lg flex flex-col max-h-[90vh] overflow-hidden">
 					<DialogHeader>
 						<DialogTitle>Manage Items</DialogTitle>
 					</DialogHeader>
-					<ItemSettingsSection />
+					<div className="flex-1 overflow-y-auto min-h-0">
+						<ItemSettingsSection />
+					</div>
 				</DialogContent>
 			</Dialog>
 		</>

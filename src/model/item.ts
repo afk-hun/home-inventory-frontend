@@ -5,10 +5,15 @@ export interface IConnectedStore {
 	storeItemName: string;
 }
 
+export interface IItemType {
+	_id: string;
+	name: string;
+}
+
 export interface IItem {
 	_id: string;
 	householdId: string;
 	name: string;
-	type: string | null;
+	type: IItemType | null;
 	connectedStores: IConnectedStore[];
 }

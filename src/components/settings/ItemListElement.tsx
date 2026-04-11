@@ -50,7 +50,7 @@ const ItemListElement = ({
 
 	// Edit form state
 	const [editName, setEditName] = useState(item.name);
-	const [editType, setEditType] = useState<string>(item.type ?? "");
+	const [editType, setEditType] = useState<string>(item.type?._id ?? "");
 	const [selectedStoreIds, setSelectedStoreIds] = useState<string[]>([]);
 	// Maps storeId → { storeItemId, storeItemName } for the save payload
 	const [storeItemDataMap, setStoreItemDataMap] = useState<
@@ -66,7 +66,7 @@ const ItemListElement = ({
 
 	const openEdit = () => {
 		setEditName(item.name);
-		setEditType(item.type ?? "");
+		setEditType(item.type?._id ?? "");
 		setError(null);
 
 		// Pre-populate store selections and item data from existing connectedStores

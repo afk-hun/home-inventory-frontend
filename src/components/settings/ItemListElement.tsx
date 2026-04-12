@@ -258,6 +258,9 @@ const ItemListElement = ({
 			<div className="flex items-center justify-between gap-4 rounded-md border px-4 py-3">
 				<div className="flex min-w-0 flex-col gap-1">
 					<span className="truncate font-medium">{item.name}</span>
+					{item.type && (
+						<span className="text-xs text-muted-foreground">{item.type.name}</span>
+					)}
 					{item.connectedStores.length > 0 && (
 						<div className="flex flex-wrap gap-1">
 							{item.connectedStores.map((cs) => (

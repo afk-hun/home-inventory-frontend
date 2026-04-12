@@ -148,7 +148,12 @@ const ShelfItemList = ({ shelfId, refreshKey, moveMode = false, onMoveSelectionC
 							key={item._id}
 							className="flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-muted/50"
 						>
-							<span className="flex-1 text-sm">{displayName}</span>
+							<div className="flex-1">
+								<div className="text-sm">{displayName}</div>
+								{item.item.type && (
+									<div className="text-xs text-muted-foreground">{item.item.type.name}</div>
+								)}
+							</div>
 							{isEditing ? (
 								<>
 									<Input

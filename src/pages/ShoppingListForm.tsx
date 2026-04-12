@@ -124,6 +124,7 @@ const ShoppingListForm = () => {
 						unit: m.unit,
 						_key: nextKey(),
 						checked: false,
+						discount: false,
 					})),
 				]);
 				setSelectedRecipeId(NONE);
@@ -144,6 +145,7 @@ const ShoppingListForm = () => {
 				unit: "",
 				_key: nextKey(),
 				checked: false,
+				discount: false,
 			},
 		]);
 		setSelectedItemId(NONE);
@@ -180,6 +182,14 @@ const ShoppingListForm = () => {
 		);
 	};
 
+	const handleDiscountChange = (key: number, discount: boolean) => {
+		setItems((prev) =>
+			prev.map((i) =>
+				i._key === key ? { ...i, discount } : i,
+			),
+		);
+	};
+
 	const handleToggleChecked = (key: number) => {
 		setItems((prev) => {
 			const updated = prev.map((i) =>
@@ -192,11 +202,12 @@ const ShoppingListForm = () => {
 			if (!isNew && id) {
 				updateShoppingList(id, {
 					items: reordered.map(
-						({ itemName, quantity, unit, checked }) => ({
+						({ itemName, quantity, unit, checked, discount }) => ({
 							itemName,
 							quantity,
 							unit,
 							checked,
+							discount,
 						}),
 					),
 				}).catch((err: Error) => setError(err.message));
@@ -220,11 +231,12 @@ const ShoppingListForm = () => {
 		const payload = {
 			name: trimmedName,
 			storeId,
-			items: items.map(({ itemName, quantity, unit, checked }) => ({
+			items: items.map(({ itemName, quantity, unit, checked, discount }) => ({
 				itemName,
 				quantity,
 				unit,
 				checked,
+				discount,
 			})),
 		};
 
@@ -397,6 +409,17 @@ const ShoppingListForm = () => {
 										>
 											{item.itemName}
 										</span>
+
+										<div className="flex items-center gap-2 shrink-0">
+											<Checkbox
+												checked={item.discount ?? false}
+												onCheckedChange={(checked) =>
+													handleDiscountChange(item._key, checked === true)
+												}
+												disabled={saving}
+											/>
+											<span className="text-xs text-muted-foreground">Discount</span>
+										</div>
 
 										{/* Quantity */}
 										<Input

@@ -104,11 +104,6 @@ const RecipeForm = () => {
 		setIngredientDialogOpen(true);
 	};
 
-	const handleCancelEdit = () => {
-		setEditingIngredientIndex(null);
-		setIngredientDialogOpen(false);
-	};
-
 	const handleIngredientDialogOpenChange = (open: boolean) => {
 		if (!open) {
 			setEditingIngredientIndex(null);

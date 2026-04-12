@@ -19,6 +19,14 @@ const ItemSettingsSection = () => {
 	const [newItemName, setNewItemName] = useState("");
 	const [error, setError] = useState<string | null>(null);
 
+	const normalizedQuery = newItemName.trim().toLowerCase();
+	const filteredItems = normalizedQuery
+		? items.filter((item) => item.name.toLowerCase().includes(normalizedQuery))
+		: items;
+	const hasExactMatch = normalizedQuery.length > 0
+		? items.some((item) => item.name.trim().toLowerCase() === normalizedQuery)
+		: false;
+
 	useEffect(() => {
 		setLoading(true);
 		Promise.all([fetchItems(), fetchItemTypes(), fetchStores()])
@@ -38,6 +46,10 @@ const ItemSettingsSection = () => {
 	const handleCreate = () => {
 		const name = newItemName.trim();
 		if (!name) return;
+		if (hasExactMatch) {
+			setError("This item already exists.");
+			return;
+		}
 
 		setLoading(true);
 		setError(null);
@@ -68,24 +80,36 @@ const ItemSettingsSection = () => {
 				<Input
 					placeholder="New item name"
 					value={newItemName}
-					onChange={(e) => setNewItemName(e.target.value)}
+					onChange={(e) => {
+						setNewItemName(e.target.value);
+						if (error) {
+							setError(null);
+						}
+					}}
 					onKeyDown={(e) => e.key === "Enter" && handleCreate()}
 					disabled={loading}
 				/>
-				<Button onClick={handleCreate} disabled={loading || !newItemName.trim()}>
+				<Button onClick={handleCreate} disabled={loading || !newItemName.trim() || hasExactMatch}>
 					+
 				</Button>
 			</div>
 
 			{error && <p className="text-destructive text-sm">{error}</p>}
+			{hasExactMatch && !error && (
+				<p className="text-muted-foreground text-sm">An item with this name already exists.</p>
+			)}
 
 			{items.length === 0 && !loading ? (
 				<div className="flex min-h-24 items-center justify-center rounded-md border border-dashed">
 					<p className="text-muted-foreground text-sm">No items yet. Add one above.</p>
 				</div>
+			) : filteredItems.length === 0 ? (
+				<div className="flex min-h-24 items-center justify-center rounded-md border border-dashed">
+					<p className="text-muted-foreground text-sm">No matching items for this name.</p>
+				</div>
 			) : (
 				<div className="space-y-2">
-					{items.map((item) => (
+					{filteredItems.map((item) => (
 						<ItemListElement
 							key={item._id}
 							item={item}

@@ -4,29 +4,23 @@ import { Settings2, Plus, ArrowRightLeft, Check, Undo2 } from "lucide-react";
 import { IShelf } from "@/model/shelf";
 import { IShelfType } from "@/model/shelfType";
 import { IShelfPlaceType } from "@/model/shelfPlaceType";
-import { IItem } from "@/model/item";
 import { fetchShelfTypes } from "@/api/shelfType";
 import { fetchShelfPlaceTypes } from "@/api/shelfPlaceType";
-import { fetchItems } from "@/api/item";
 import { fetchShelf, updateShelf, addShelfItem, fetchShelves } from "@/api/shelf";
-import { UNIT_GROUPS } from "@/lib/units";
-import ItemSettingsSection from "@/components/settings/ItemSettingsSection";
+import ItemQuantityDialog from "@/components/ItemQuantityDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
 	Dialog,
 	DialogContent,
-	DialogFooter,
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
 import {
 	Select,
 	SelectContent,
-	SelectGroup,
 	SelectItem,
-	SelectLabel,
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
@@ -65,16 +59,7 @@ const ShelfDetails = ({
 	const [error, setError] = useState<string | null>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
 
-	// Add item state
-	const [availableItems, setAvailableItems] = useState<IItem[]>([]);
 	const [addDialogOpen, setAddDialogOpen] = useState(false);
-	const [selectedItemId, setSelectedItemId] = useState<string>(NONE);
-	const [addQuantity, setAddQuantity] = useState<string>("");
-	const [addUnit, setAddUnit] = useState<string>(NONE);
-	const [adding, setAdding] = useState(false);
-	const [addError, setAddError] = useState<string | null>(null);
-	const [itemsDialogOpen, setItemsDialogOpen] = useState(false);
-
 	// Move mode state
 	const [shelves, setShelves] = useState<IShelf[]>([]);
 	const [moveTarget, setMoveTarget] = useState<string>(NONE);
@@ -86,9 +71,6 @@ const ShelfDetails = ({
 			.catch((err) => console.error(err));
 		fetchShelfPlaceTypes()
 			.then(setPlaceTypes)
-			.catch((err) => console.error(err));
-		fetchItems()
-			.then(setAvailableItems)
 			.catch((err) => console.error(err));
 	}, []);
 
@@ -155,42 +137,8 @@ const ShelfDetails = ({
 		if (e.key === "Enter") handleNameSave();
 	};
 
-	const handleItemsDialogChange = (open: boolean) => {
-		setItemsDialogOpen(open);
-		if (!open) {
-			fetchItems()
-				.then(setAvailableItems)
-				.catch((err) => console.error(err));
-		}
-	};
-
 	const openAddDialog = () => {
-		setSelectedItemId(NONE);
-		setAddQuantity("");
-		setAddUnit(NONE);
-		setAddError(null);
 		setAddDialogOpen(true);
-	};
-
-	const handleAdd = () => {
-		if (!shelfId || selectedItemId === NONE) return;
-		const qty = parseFloat(addQuantity);
-		if (isNaN(qty) || qty <= 0) {
-			setAddError("Please enter a valid quantity.");
-			return;
-		}
-		const item = availableItems.find((i) => i._id === selectedItemId);
-		if (!item) return;
-		const unit = addUnit === NONE ? undefined : addUnit;
-		setAdding(true);
-		setAddError(null);
-		addShelfItem(shelfId, item._id, item.name, qty, unit)
-			.then(() => {
-				setAddDialogOpen(false);
-				onItemAdded?.();
-			})
-			.catch((err: Error) => setAddError(err.message))
-			.finally(() => setAdding(false));
 	};
 
 	if (!shelfId) return null;
@@ -322,9 +270,9 @@ const ShelfDetails = ({
 								</SelectTrigger>
 								<SelectContent>
 									<SelectItem value={NONE}>—</SelectItem>
-									{shelfTypes.map((t) => (
-										<SelectItem key={t._id} value={t.name}>
-											{t.name}
+									{shelfTypes.map((entry) => (
+										<SelectItem key={entry._id} value={entry.name}>
+											{entry.name}
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -343,9 +291,9 @@ const ShelfDetails = ({
 								</SelectTrigger>
 								<SelectContent>
 									<SelectItem value={NONE}>—</SelectItem>
-									{placeTypes.map((p) => (
-										<SelectItem key={p._id} value={p.name}>
-											{p.name}
+									{placeTypes.map((entry) => (
+										<SelectItem key={entry._id} value={entry.name}>
+											{entry.name}
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -358,113 +306,20 @@ const ShelfDetails = ({
 				</DialogContent>
 			</Dialog>
 
-			{/* Add item dialog */}
-			<Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-				<DialogContent className="max-w-xs">
-					<DialogHeader>
-						<DialogTitle>Add Item to Shelf</DialogTitle>
-					</DialogHeader>
+			<ItemQuantityDialog
+				open={addDialogOpen}
+				onOpenChange={setAddDialogOpen}
+				title="Add Item to Shelf"
+				onSubmit={({ item, quantity, unit }) => {
+					if (!shelfId) {
+						throw new Error("Shelf not found.");
+					}
 
-					<div className="space-y-4 pt-1">
-						<div className="space-y-1.5">
-							<Label>Item</Label>
-							<div className="flex gap-2">
-								<Select
-									value={selectedItemId}
-									onValueChange={setSelectedItemId}
-									disabled={adding}
-								>
-									<SelectTrigger className="flex-1">
-										<SelectValue placeholder="Select an item" />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value={NONE}>—</SelectItem>
-										{availableItems.map((i) => (
-											<SelectItem key={i._id} value={i._id}>
-												{i.name}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
-								<Button
-									variant="outline"
-									size="sm"
-									className="shrink-0"
-									onClick={() => setItemsDialogOpen(true)}
-									disabled={adding}
-								>
-									New
-								</Button>
-							</div>
-						</div>
-
-						<div className="space-y-1.5">
-							<Label>Quantity</Label>
-							<Input
-								type="number"
-								min="0"
-								value={addQuantity}
-								onChange={(e) => setAddQuantity(e.target.value)}
-								disabled={adding}
-							/>
-						</div>
-
-						<div className="space-y-1.5">
-							<Label>Unit</Label>
-							<Select
-								value={addUnit}
-								onValueChange={setAddUnit}
-								disabled={adding}
-							>
-								<SelectTrigger>
-									<SelectValue placeholder="—" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value={NONE}>—</SelectItem>
-									{UNIT_GROUPS.map((group) => (
-										<SelectGroup key={group.label}>
-											<SelectLabel>{group.label}</SelectLabel>
-											{group.units.map((u) => (
-												<SelectItem key={u} value={u}>
-													{u}
-												</SelectItem>
-											))}
-										</SelectGroup>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
-
-						{addError && <p className="text-destructive text-xs">{addError}</p>}
-					</div>
-
-					<DialogFooter>
-						<Button
-							variant="outline"
-							onClick={() => setAddDialogOpen(false)}
-							disabled={adding}
-						>
-							Cancel
-						</Button>
-						<Button
-							onClick={handleAdd}
-							disabled={adding || selectedItemId === NONE}
-						>
-							{adding ? "Adding…" : "Add"}
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
-
-		{/* Items management dialog */}
-		<Dialog open={itemsDialogOpen} onOpenChange={handleItemsDialogChange}>
-			<DialogContent className="max-w-lg">
-				<DialogHeader>
-					<DialogTitle>Manage Items</DialogTitle>
-				</DialogHeader>
-				<ItemSettingsSection />
-			</DialogContent>
-		</Dialog>
+					return addShelfItem(shelfId, item._id, item.name, quantity, unit).then(() => {
+						onItemAdded?.();
+					});
+				}}
+			/>
 		</>
 	);
 };

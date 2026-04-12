@@ -16,6 +16,7 @@ import { fetchItemsByStore } from "@/api/item";
 import { fetchRecipes, fetchMissingIngredients } from "@/api/recipe";
 import { fetchStores } from "@/api/store";
 import { UNIT_GROUPS } from "@/lib/units";
+import ItemSearchPicker from "@/components/ItemSearchPicker";
 import ItemSettingsSection from "@/components/settings/ItemSettingsSection";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -341,29 +342,20 @@ const ShoppingListForm = () => {
 					<div className="space-y-1.5">
 						<Label>Add Item</Label>
 						<div className="flex gap-2">
-							<Select
+							<ItemSearchPicker
+								items={availableItems}
 								value={selectedItemId}
-								onValueChange={(val) => {
-									setSelectedItemId(val);
-									handleAddItem(val);
+								onValueChange={(value) => {
+									setSelectedItemId(value);
+									handleAddItem(value);
 								}}
+								emptyValue={NONE}
+								placeholder="Type to find an item..."
+								emptyMessage="No matching items found for this store."
 								disabled={saving || storeId === NONE}
-							>
-								<SelectTrigger className="flex-1">
-									<SelectValue placeholder="Select an item to add…" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value={NONE}>—</SelectItem>
-									{availableItems.map((item) => (
-										<SelectItem
-											key={item._id}
-											value={item._id}
-										>
-											{item.name}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
+								forceClosed={itemsDialogOpen}
+								className="flex-1"
+							/>
 							<Button
 								variant="outline"
 								size="sm"

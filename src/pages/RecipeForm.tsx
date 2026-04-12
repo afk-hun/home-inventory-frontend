@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router";
 import { Trash2, Pencil } from "lucide-react";
 
 import { IIngredient } from "@/model/recipe";
-// import { IItem } from "@/model/item";
+import { IItem } from "@/model/item";
 import { IRecipeType } from "@/model/recipeType";
 import { fetchItems } from "@/api/item";
 import { fetchRecipe, createRecipe, updateRecipe } from "@/api/recipe";
@@ -39,17 +39,18 @@ const RecipeForm = () => {
 	const [portion, setPortion] = useState<string>("");
 	const [type, setType] = useState<string>(NONE);
 	const [ingredients, setIngredients] = useState<IngredientWithName[]>([]);
-	// const [availableItems, setAvailableItems] = useState<IItem[]>([]);
+	const [allAvailableItems, setAllAvailableItems] = useState<IItem[]>([]);
 	const [recipeTypes, setRecipeTypes] = useState<IRecipeType[]>([]);
 
 	const [loading, setLoading] = useState<boolean>(false);
 	const [saving, setSaving] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
 	const [ingredientDialogOpen, setIngredientDialogOpen] = useState<boolean>(false);
+	const [editingIngredientIndex, setEditingIngredientIndex] = useState<number | null>(null);
 
 	useEffect(() => {
 		fetchItems()
-			// .then(setAvailableItems)
+			.then(setAllAvailableItems)
 			.catch((err) => console.error(err));
 		fetchRecipeTypes()
 			.then(setRecipeTypes)
@@ -82,7 +83,37 @@ const RecipeForm = () => {
 	}, [id]);
 
 	const handleAddIngredient = (ingredient: IIngredient, itemName: string) => {
-		setIngredients((prev) => [...prev, { ingredient, itemName }]);
+		if (editingIngredientIndex !== null) {
+			// Editing existing ingredient
+			setIngredients((prev) =>
+				prev.map((entry, i) =>
+					i === editingIngredientIndex
+						? { ingredient, itemName }
+						: entry,
+				),
+			);
+			setEditingIngredientIndex(null);
+		} else {
+			// Adding new ingredient
+			setIngredients((prev) => [...prev, { ingredient, itemName }]);
+		}
+	};
+
+	const handleEditIngredient = (index: number) => {
+		setEditingIngredientIndex(index);
+		setIngredientDialogOpen(true);
+	};
+
+	const handleCancelEdit = () => {
+		setEditingIngredientIndex(null);
+		setIngredientDialogOpen(false);
+	};
+
+	const handleIngredientDialogOpenChange = (open: boolean) => {
+		if (!open) {
+			setEditingIngredientIndex(null);
+		}
+		setIngredientDialogOpen(open);
 	};
 
 	const handleRemoveIngredient = (index: number) => {
@@ -287,15 +318,28 @@ const RecipeForm = () => {
 											{entry.ingredient.unit ? ` ${entry.ingredient.unit}` : ""}
 										</span>
 									</span>
-									<Button
-										variant="ghost"
-										size="sm"
-										className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-										onClick={() => handleRemoveIngredient(index)}
-										disabled={saving}
-									>
-										<Trash2 className="h-3.5 w-3.5" />
-									</Button>
+									<div className="flex gap-1">
+										<Button
+											variant="ghost"
+											size="sm"
+											className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+											onClick={() => handleEditIngredient(index)}
+											disabled={saving}
+											title="Edit ingredient"
+										>
+											<Pencil className="h-3.5 w-3.5" />
+										</Button>
+										<Button
+											variant="ghost"
+											size="sm"
+											className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+											onClick={() => handleRemoveIngredient(index)}
+											disabled={saving}
+											title="Remove ingredient"
+										>
+											<Trash2 className="h-3.5 w-3.5" />
+										</Button>
+									</div>
 								</li>
 							))}
 						</ul>
@@ -320,8 +364,23 @@ const RecipeForm = () => {
 
 			<AddIngredientDialog
 				open={ingredientDialogOpen}
-				onOpenChange={setIngredientDialogOpen}
+				onOpenChange={handleIngredientDialogOpenChange}
 				onAdd={handleAddIngredient}
+				preselectedItem={
+					editingIngredientIndex !== null
+						? allAvailableItems.find((i) => i._id === ingredients[editingIngredientIndex].ingredient.item)
+						: undefined
+				}
+				preQuantity={
+					editingIngredientIndex !== null
+						? ingredients[editingIngredientIndex].ingredient.quantity
+						: undefined
+				}
+				preUnit={
+					editingIngredientIndex !== null && ingredients[editingIngredientIndex].ingredient.unit
+						? ingredients[editingIngredientIndex].ingredient.unit
+						: undefined
+				}
 			/>
 		</div>
 	);

@@ -33,6 +33,10 @@ type ItemQuantityDialogProps = {
 	title: string;
 	submitLabel?: string;
 	onSubmit: (payload: { item: IItem; quantity: number; unit?: string }) => Promise<void> | void;
+	preselectedItem?: IItem;
+	preQuantity?: number;
+	preUnit?: string;
+	disableItemSelection?: boolean;
 };
 
 const ItemQuantityDialog = ({
@@ -41,6 +45,10 @@ const ItemQuantityDialog = ({
 	title,
 	submitLabel = "Add",
 	onSubmit,
+	preselectedItem,
+	preQuantity,
+	preUnit,
+	disableItemSelection = false,
 }: ItemQuantityDialogProps) => {
 	const [availableItems, setAvailableItems] = useState<IItem[]>([]);
 	const [selectedItemId, setSelectedItemId] = useState<string>(NONE);
@@ -61,12 +69,12 @@ const ItemQuantityDialog = ({
 			return;
 		}
 
-		setSelectedItemId(NONE);
-		setQuantity("");
-		setUnit(NONE);
+		setSelectedItemId(preselectedItem?._id ?? NONE);
+		setQuantity(preQuantity !== undefined ? String(preQuantity) : "");
+		setUnit(preUnit ?? NONE);
 		setError(null);
 		setSubmitting(false);
-	}, [open]);
+	}, [open, preselectedItem, preQuantity, preUnit]);
 
 	const handleItemsDialogChange = (dialogOpen: boolean) => {
 		setItemsDialogOpen(dialogOpen);
@@ -126,27 +134,33 @@ const ItemQuantityDialog = ({
 					<div className="space-y-4 pt-1">
 						<div className="space-y-1.5">
 							<Label>Item</Label>
-							<div className="flex gap-2">
-								<ItemSearchPicker
-									items={availableItems}
-									value={selectedItemId}
-									onValueChange={setSelectedItemId}
-									emptyValue={NONE}
-									placeholder="Type to find an item..."
-									disabled={submitting}
-									forceClosed={itemsDialogOpen}
-									className="flex-1"
-								/>
-								<Button
-									variant="outline"
-									size="sm"
-									className="shrink-0"
-									onClick={() => setItemsDialogOpen(true)}
-									disabled={submitting}
-								>
-									New
-								</Button>
-							</div>
+							{disableItemSelection ? (
+								<div className="px-3 py-2 rounded-md border border-input bg-muted text-sm">
+									{preselectedItem?.name || "—"}
+								</div>
+							) : (
+								<div className="flex gap-2">
+									<ItemSearchPicker
+										items={availableItems}
+										value={selectedItemId}
+										onValueChange={setSelectedItemId}
+										emptyValue={NONE}
+										placeholder="Type to find an item..."
+										disabled={submitting}
+										forceClosed={itemsDialogOpen}
+										className="flex-1"
+									/>
+									<Button
+										variant="outline"
+										size="sm"
+										className="shrink-0"
+										onClick={() => setItemsDialogOpen(true)}
+										disabled={submitting}
+									>
+										New
+									</Button>
+								</div>
+							)}
 						</div>
 
 						<div className="space-y-1.5">

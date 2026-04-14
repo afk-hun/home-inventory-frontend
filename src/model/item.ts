@@ -16,4 +16,5 @@ export interface IItem {
 	name: string;
 	type: IItemType | null;
 	connectedStores: IConnectedStore[];
+	isFavorite?: boolean;
 }

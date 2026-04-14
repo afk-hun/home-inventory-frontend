@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Star, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +25,7 @@ import { IItem, IConnectedStore } from "@/model/item";
 import { IItemType } from "@/model/itemType";
 import { IStore } from "@/model/store";
 import { IInvoiceItemRecord } from "@/model/invoiceItem";
-import { updateItem, deleteItem } from "@/api/item";
+import { updateItem, deleteItem, toggleFavoriteItem } from "@/api/item";
 import { fetchInvoiceItems } from "@/api/invoiceItem";
 
 interface ItemListElementProps {
@@ -33,6 +33,7 @@ interface ItemListElementProps {
 	itemTypes: IItemType[];
 	stores: IStore[];
 	onUpdated: (updated: IItem) => void;
+	onFavoriteChanged: (itemId: string, isFavorite: boolean) => void;
 	onDeleted: (itemId: string) => void;
 }
 
@@ -41,10 +42,12 @@ const ItemListElement = ({
 	itemTypes,
 	stores,
 	onUpdated,
+	onFavoriteChanged,
 	onDeleted,
 }: ItemListElementProps) => {
 	const [editOpen, setEditOpen] = useState(false);
 	const [saving, setSaving] = useState(false);
+	const [favoriteSaving, setFavoriteSaving] = useState(false);
 	const [deleting, setDeleting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -253,6 +256,21 @@ const ItemListElement = ({
 			});
 	};
 
+	const handleFavoriteToggle = () => {
+		setFavoriteSaving(true);
+		setError(null);
+		toggleFavoriteItem(item._id, Boolean(item.isFavorite))
+			.then((isFavorite) => {
+				onFavoriteChanged(item._id, isFavorite);
+			})
+			.catch((err: Error) => {
+				setError(err.message);
+			})
+			.finally(() => {
+				setFavoriteSaving(false);
+			});
+	};
+
 	return (
 		<>
 			<div className="flex items-center justify-between gap-4 rounded-md border px-4 py-3">
@@ -275,8 +293,17 @@ const ItemListElement = ({
 					<Button
 						variant="outline"
 						size="sm"
+						onClick={handleFavoriteToggle}
+						disabled={favoriteSaving || deleting}
+						aria-label={item.isFavorite ? "Remove item from favorites" : "Add item to favorites"}
+					>
+						<Star className={item.isFavorite ? "h-4 w-4 fill-current text-amber-500" : "h-4 w-4"} />
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
 						onClick={openEdit}
-						disabled={deleting}
+						disabled={deleting || favoriteSaving}
 						aria-label="Edit item"
 					>
 						<Pencil className="h-4 w-4" />
@@ -285,13 +312,14 @@ const ItemListElement = ({
 						variant="destructive"
 						size="sm"
 						onClick={handleDelete}
-						disabled={deleting}
+						disabled={deleting || favoriteSaving}
 						aria-label="Delete item"
 					>
 						<Trash2 className="h-4 w-4" />
 					</Button>
 				</div>
 			</div>
+			{error && !editOpen && <p className="px-1 text-sm text-destructive">{error}</p>}
 
 			<Dialog open={editOpen} onOpenChange={setEditOpen}>
 				<DialogContent className="max-w-md">

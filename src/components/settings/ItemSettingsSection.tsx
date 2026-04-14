@@ -74,6 +74,10 @@ const ItemSettingsSection = () => {
 		setItems((prev) => prev.filter((it) => it._id !== itemId));
 	};
 
+	const handleFavoriteChanged = (itemId: string, isFavorite: boolean) => {
+		setItems((prev) => prev.map((it) => (it._id === itemId ? { ...it, isFavorite } : it)));
+	};
+
 	return (
 		<div className="space-y-4">
 			<div className="flex gap-2">
@@ -116,6 +120,7 @@ const ItemSettingsSection = () => {
 							itemTypes={itemTypes}
 							stores={stores}
 							onUpdated={handleUpdated}
+							onFavoriteChanged={handleFavoriteChanged}
 							onDeleted={handleDeleted}
 						/>
 					))}

@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Pencil, Trash2, Check, Undo2 } from "lucide-react";
+import { Pencil, Trash2, Check, Undo2, Star } from "lucide-react";
 
 import { IShelfItem } from "@/model/shelf";
 import { fetchShelf, addShelfItem, removeShelfItem } from "@/api/shelf";
+import { fetchFavoriteItems, toggleFavoriteItem } from "@/api/item";
 import { UNIT_GROUPS } from "@/lib/units";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -36,18 +37,24 @@ const ShelfItemList = ({ shelfId, refreshKey, moveMode = false, onMoveSelectionC
 	const [editUnit, setEditUnit] = useState<string>(NONE);
 	const [moveSelectedIds, setMoveSelectedIds] = useState<string[]>([]);
 	const [searchQuery, setSearchQuery] = useState<string>("");
+	const [favoriteItemIds, setFavoriteItemIds] = useState<string[]>([]);
+	const [favoriteUpdatingId, setFavoriteUpdatingId] = useState<string | null>(null);
 
 	useEffect(() => {
 		if (!shelfId) {
 			setItems([]);
+			setFavoriteItemIds([]);
 			setEditingId(null);
 			setSearchQuery("");
 			return;
 		}
 		setLoading(true);
 		setError(null);
-		fetchShelf(shelfId)
-			.then((shelf) => setItems(shelf.items))
+		Promise.all([fetchShelf(shelfId), fetchFavoriteItems()])
+			.then(([shelf, favorites]) => {
+				setItems(shelf.items);
+				setFavoriteItemIds(favorites.map((favorite) => favorite._id));
+			})
 			.catch((err: Error) => setError(err.message))
 			.finally(() => setLoading(false));
 	}, [shelfId, refreshKey]);
@@ -105,6 +112,24 @@ const ShelfItemList = ({ shelfId, refreshKey, moveMode = false, onMoveSelectionC
 			.finally(() => setLoading(false));
 	};
 
+	const handleFavoriteToggle = (itemId: string) => {
+		const isFavorite = favoriteItemIds.includes(itemId);
+		setFavoriteUpdatingId(itemId);
+		setError(null);
+		toggleFavoriteItem(itemId, isFavorite)
+			.then((nextFavoriteState) => {
+				setFavoriteItemIds((prev) => {
+					if (nextFavoriteState) {
+						return prev.includes(itemId) ? prev : [...prev, itemId];
+					}
+
+					return prev.filter((id) => id !== itemId);
+				});
+			})
+			.catch((err: Error) => setError(err.message))
+			.finally(() => setFavoriteUpdatingId(null));
+	};
+
 	const filteredItems = items.filter((item) => {
 		const name = (item.itemName || item.item.name).toLowerCase();
 		return name.includes(searchQuery.toLowerCase());
@@ -143,6 +168,7 @@ const ShelfItemList = ({ shelfId, refreshKey, moveMode = false, onMoveSelectionC
 				{filteredItems.map((item) => {
 					const displayName = item.itemName || item.item.name;
 					const isEditing = editingId === item._id;
+					const isFavorite = favoriteItemIds.includes(item.item._id);
 					return (
 						<div
 							key={item._id}
@@ -218,8 +244,17 @@ const ShelfItemList = ({ shelfId, refreshKey, moveMode = false, onMoveSelectionC
 												variant="ghost"
 												size="sm"
 												className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+												onClick={() => handleFavoriteToggle(item.item._id)}
+												disabled={loading || favoriteUpdatingId === item.item._id}
+											>
+												<Star className={isFavorite ? "h-4 w-4 fill-current text-amber-500" : "h-4 w-4"} />
+											</Button>
+											<Button
+												variant="ghost"
+												size="sm"
+												className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
 												onClick={() => startEdit(item)}
-												disabled={loading}
+												disabled={loading || favoriteUpdatingId === item.item._id}
 											>
 												<Pencil className="h-4 w-4" />
 											</Button>
@@ -228,7 +263,7 @@ const ShelfItemList = ({ shelfId, refreshKey, moveMode = false, onMoveSelectionC
 												size="sm"
 												className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
 												onClick={() => handleDelete(item._id)}
-												disabled={loading}
+												disabled={loading || favoriteUpdatingId === item.item._id}
 											>
 												<Trash2 className="h-4 w-4" />
 											</Button>

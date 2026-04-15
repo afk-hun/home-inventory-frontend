@@ -401,81 +401,85 @@ const ShoppingListForm = () => {
 												handleToggleChecked(item._key)
 											}
 											disabled={saving}
+											className="mt-1"
 										/>
 
-										{/* Item name */}
-										<span
-											className={`min-w-0 flex-1 truncate text-sm font-medium ${item.checked ? "text-muted-foreground line-through" : ""}`}
-										>
-											{item.itemName}
-										</span>
+										<div className="min-w-0 flex-1 space-y-2">
+											<div className="flex items-center justify-between gap-2">
+												<span
+													className={`min-w-0 truncate text-sm font-medium ${item.checked ? "text-muted-foreground line-through" : ""}`}
+												>
+													{item.itemName}
+												</span>
 
-										<div className="flex items-center gap-2 shrink-0">
-											<Checkbox
-												checked={item.discount ?? false}
-												onCheckedChange={(checked) =>
-													handleDiscountChange(item._key, checked === true)
-												}
-												disabled={saving}
-											/>
-											<span className="text-xs text-muted-foreground">Discount</span>
-										</div>
+												<label className="flex shrink-0 items-center gap-2">
+													<Checkbox
+														checked={item.discount ?? false}
+														onCheckedChange={(checked) =>
+															handleDiscountChange(item._key, checked === true)
+														}
+														disabled={saving}
+													/>
+													<span className="text-xs text-muted-foreground">Discount</span>
+												</label>
+											</div>
 
-										{/* Quantity */}
-										<Input
-											type="number"
-											min="0"
-											step="any"
-											value={
-												item.quantity === 0
-													? ""
-													: item.quantity
-											}
-											onChange={(e) =>
-												handleQuantityChange(
-													item._key,
-													e.target.value,
-												)
-											}
-											className="w-20 shrink-0"
-											disabled={saving}
-										/>
+											<div className="flex items-center gap-2">
+												<Input
+													type="number"
+													min="0"
+													step="any"
+													value={
+														item.quantity === 0
+															? ""
+															: item.quantity
+													}
+													onChange={(e) =>
+														handleQuantityChange(
+															item._key,
+															e.target.value,
+														)
+													}
+													className="w-24"
+													disabled={saving}
+												/>
 
-										{/* Unit */}
-										<Select
-											value={
-												item.unit === ""
-													? NONE
-													: item.unit
-											}
-											onValueChange={(val) =>
-												handleUnitChange(item._key, val)
-											}
-											disabled={saving}
-										>
-											<SelectTrigger className="w-28 shrink-0">
-												<SelectValue placeholder="—" />
-											</SelectTrigger>
-											<SelectContent>
-												<SelectItem value={NONE}>—</SelectItem>
-												{UNIT_GROUPS.map((group) => (
-													<SelectGroup key={group.label}>
-														<SelectLabel>{group.label}</SelectLabel>
-														{group.units.map((u) => (
-															<SelectItem key={u} value={u}>
-																{u}
-															</SelectItem>
+												<Select
+													value={
+														item.unit === ""
+															? NONE
+															: item.unit
+													}
+													onValueChange={(val) =>
+														handleUnitChange(item._key, val)
+													}
+													disabled={saving}
+												>
+													<SelectTrigger className="w-32">
+														<SelectValue placeholder="—" />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value={NONE}>—</SelectItem>
+														{UNIT_GROUPS.map((group) => (
+															<SelectGroup key={group.label}>
+																<SelectLabel>{group.label}</SelectLabel>
+																{group.units.map((u) => (
+																	<SelectItem key={u} value={u}>
+																		{u}
+																	</SelectItem>
+																))}
+															</SelectGroup>
 														))}
-													</SelectGroup>
-												))}
-											</SelectContent>
-										</Select>
+													</SelectContent>
+												</Select>
+											</div>
+										</div>
 
 										{/* Remove */}
 										<Button
 											variant="ghost"
 											size="sm"
-											className="h-7 w-7 shrink-0 p-0 text-muted-foreground hover:text-destructive"
+											className="mt-1 h-7 w-7 shrink-0 p-0 text-muted-foreground hover:text-destructive"
 											onClick={() =>
 												handleRemoveItem(item._key)
 											}

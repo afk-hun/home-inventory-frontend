@@ -17,10 +17,10 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { fetchSchedules, createSchedule } from "@/api/cookingSchedule";
-import { fetchRecipes } from "@/api/recipe";
+import { fetchSchedules, createSchedule, updateSchedule } from "@/api/cookingSchedule";
+import { fetchRecipe, fetchRecipes } from "@/api/recipe";
 import { fetchMealTypes } from "@/api/mealType";
-import { consumeRecipeIngredients } from "@/api/shelf";
+import { addShelfItem, consumeRecipeIngredients, fetchShelves } from "@/api/shelf";
 import { ICookingSchedule, IMeal } from "@/model/cookingSchedule";
 import { IRecipe } from "@/model/recipe";
 import { IMealType } from "@/model/mealType";
@@ -38,7 +38,11 @@ const MealPlans = () => {
 	const [mealTypes, setMealTypes] = useState<IMealType[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [consuming, setConsuming] = useState<string | null>(null);
-	const [pendingMeal, setPendingMeal] = useState<{ mealId: string; recipeId: string } | null>(null);
+	const [pendingMeal, setPendingMeal] = useState<{
+		mealId: string;
+		recipeId: string;
+		action: "done" | "undo";
+	} | null>(null);
 
 	useEffect(() => {
 		fetchRecipes().then(setRecipes).catch(console.error);
@@ -100,13 +104,62 @@ const MealPlans = () => {
 	const handleConsumeClick = (e: React.MouseEvent, meal: IMeal) => {
 		e.stopPropagation();
 		if (!meal._id) return;
-		setPendingMeal({ mealId: meal._id, recipeId: meal.recipe });
+		setPendingMeal({
+			mealId: meal._id,
+			recipeId: meal.recipe,
+			action: meal.done ? "undo" : "done",
+		});
+	};
+
+	const restoreIngredientsToShoppingBag = (recipeId: string): Promise<void> => {
+		return fetchRecipe(recipeId)
+			.then((recipe) =>
+				fetchShelves().then((shelves) => {
+					const shoppingBag = shelves.find((shelf) => shelf.type === "shopping-bag");
+
+					if (!shoppingBag) {
+						throw new Error("Shopping Bag shelf not found.");
+					}
+
+					return Promise.all(
+						recipe.ingredients.map((ingredient) =>
+							addShelfItem(
+								shoppingBag._id,
+								ingredient.item,
+								undefined,
+								ingredient.quantity,
+								ingredient.unit || undefined,
+							),
+						),
+					).then(() => undefined);
+				}),
+			)
+			.catch((err) => {
+				throw err;
+			});
 	};
 
 	const handleConsumeConfirm = () => {
-		if (!pendingMeal) return;
-		const { mealId, recipeId } = pendingMeal;
+		if (!pendingMeal || !schedule) return;
+		const { mealId, recipeId, action } = pendingMeal;
 		setConsuming(mealId);
+
+		if (action === "undo") {
+			const updatedMeals = schedule.meals.map((meal) =>
+				meal._id === mealId ? { ...meal, done: false } : meal,
+			);
+
+			restoreIngredientsToShoppingBag(recipeId)
+				.then(() => updateSchedule(schedule._id, { meals: updatedMeals }))
+				.then((savedSchedule) => setSchedule(savedSchedule))
+				.catch(console.error)
+				.finally(() => {
+					setConsuming(null);
+					setPendingMeal(null);
+				});
+			return;
+		}
+
 		consumeRecipeIngredients(recipeId, mealId)
 			.then(() => {
 				setSchedule((prev) => {
@@ -120,7 +173,10 @@ const MealPlans = () => {
 				});
 			})
 			.catch(console.error)
-			.finally(() => setConsuming(null));
+			.finally(() => {
+				setConsuming(null);
+				setPendingMeal(null);
+			});
 	};
 
 	const handleEditMeal = (meal: IMeal) => {
@@ -134,19 +190,27 @@ const MealPlans = () => {
 			: format(range.from, "MMM d")
 		: null;
 
+	const isUndoAction = pendingMeal?.action === "undo";
+
 	return (
 		<>
 		<AlertDialog open={!!pendingMeal} onOpenChange={(open) => { if (!open) setPendingMeal(null); }}>
 			<AlertDialogContent size="sm">
 				<AlertDialogHeader>
-					<AlertDialogTitle>Mark meal as done?</AlertDialogTitle>
+					<AlertDialogTitle>
+						{isUndoAction ? "Undo completed meal?" : "Mark meal as done?"}
+					</AlertDialogTitle>
 					<AlertDialogDescription>
-						This will remove the recipe's ingredients from your shelves and mark the meal as completed.
+						{isUndoAction
+							? "This will mark the meal as not completed. Ingredients will be restored automatically to Shopping Bag."
+							: "This will remove the recipe's ingredients from your shelves and mark the meal as completed."}
 					</AlertDialogDescription>
 				</AlertDialogHeader>
 				<AlertDialogFooter>
 					<AlertDialogCancel>Cancel</AlertDialogCancel>
-					<AlertDialogAction onClick={handleConsumeConfirm}>Yes, mark as done</AlertDialogAction>
+					<AlertDialogAction onClick={handleConsumeConfirm}>
+						{isUndoAction ? "Yes, undo" : "Yes, mark as done"}
+					</AlertDialogAction>
 				</AlertDialogFooter>
 			</AlertDialogContent>
 		</AlertDialog>
@@ -248,9 +312,9 @@ const MealPlans = () => {
 										<Button
 											variant="ghost"
 											size="icon"
-											disabled={meal.done || consuming === meal._id}
+											disabled={consuming === meal._id}
 											onClick={(e) => handleConsumeClick(e, meal)}
-											title="Mark as done — remove ingredients from shelves"
+											title={meal.done ? "Undo done meal" : "Mark as done — remove ingredients from shelves"}
 										>
 											<CheckCheck className={cn("h-4 w-4", meal.done ? "text-green-500" : "text-muted-foreground")} />
 										</Button>

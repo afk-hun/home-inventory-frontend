@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 
-import { IItem } from "@/model/item";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
+type SearchableEntity = {
+	_id: string;
+	name: string;
+};
+
 type ItemSearchPickerProps = {
-	items: IItem[];
+	items: SearchableEntity[];
 	value: string;
 	onValueChange: (value: string) => void;
 	emptyValue?: string;

@@ -321,23 +321,16 @@ const ShoppingListForm = () => {
 					<div className="space-y-1.5">
 						<Label>Import from Recipe</Label>
 						<div className="flex gap-2">
-							<Select
+							<ItemSearchPicker
+								items={recipes}
 								value={selectedRecipeId}
 								onValueChange={setSelectedRecipeId}
+								emptyValue={NONE}
+								placeholder="Type to find a recipe..."
+								emptyMessage="No matching recipes found."
 								disabled={saving || importing}
-							>
-								<SelectTrigger className="flex-1">
-									<SelectValue placeholder="Select a recipe…" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value={NONE}>—</SelectItem>
-									{recipes.map((r) => (
-										<SelectItem key={r._id} value={r._id}>
-											{r.name}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
+								className="flex-1"
+							/>
 							<Button
 								variant="outline"
 								size="sm"

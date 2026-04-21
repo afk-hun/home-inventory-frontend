@@ -124,17 +124,39 @@ const ShoppingListForm = () => {
 		setError(null);
 		fetchMissingIngredients(selectedRecipeId)
 			.then((missing) => {
-				setItems((prev) => [
-					...prev,
-					...missing.map((m) => ({
-						itemName: m.item.name,
-						quantity: m.amount,
-						unit: m.unit,
-						_key: nextKey(),
-						checked: false,
-						discount: false,
-					})),
-				]);
+				setItems((prev) => {
+					const merged = [...prev];
+
+					missing.forEach((m) => {
+						const nextItemName = m.item.name.trim().toLowerCase();
+						const nextUnit = (m.unit ?? "").trim().toLowerCase();
+						const existingIndex = merged.findIndex(
+							(item) =>
+								item.itemName.trim().toLowerCase() === nextItemName &&
+								item.unit.trim().toLowerCase() === nextUnit,
+						);
+
+						if (existingIndex >= 0) {
+							const existing = merged[existingIndex];
+							merged[existingIndex] = {
+								...existing,
+								quantity: existing.quantity + m.amount,
+							};
+							return;
+						}
+
+						merged.push({
+							itemName: m.item.name,
+							quantity: m.amount,
+							unit: m.unit,
+							_key: nextKey(),
+							checked: false,
+							discount: false,
+						});
+					});
+
+					return merged.sort(compareShoppingItems);
+				});
 				setSelectedRecipeId(NONE);
 			})
 			.catch((err: Error) => setError(err.message))

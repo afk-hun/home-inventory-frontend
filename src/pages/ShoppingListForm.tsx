@@ -45,6 +45,14 @@ interface EditableItem extends IShoppingListItem {
 	checked: boolean;
 }
 
+const compareShoppingItems = (a: EditableItem, b: EditableItem) => {
+	if (a.checked !== b.checked) {
+		return a.checked ? 1 : -1;
+	}
+
+	return a.itemName.localeCompare(b.itemName);
+};
+
 let keyCounter = 0;
 const nextKey = () => ++keyCounter;
 
@@ -192,12 +200,11 @@ const ShoppingListForm = () => {
 
 	const handleToggleChecked = (key: number) => {
 		setItems((prev) => {
-			const updated = prev.map((i) =>
+			const reordered = prev
+				.map((i) =>
 				i._key === key ? { ...i, checked: !i.checked } : i,
-			);
-			const unchecked = updated.filter((i) => !i.checked);
-			const checked = updated.filter((i) => i.checked);
-			const reordered = [...unchecked, ...checked];
+				)
+				.sort(compareShoppingItems);
 
 			if (!isNew && id) {
 				updateShoppingList(id, {
@@ -382,7 +389,7 @@ const ShoppingListForm = () => {
 							</div>
 						) : (
 							<ul className="divide-y rounded-md border">
-								{[...items].sort((a, b) => a.itemName.localeCompare(b.itemName)).map((item) => (
+								{[...items].sort(compareShoppingItems).map((item) => (
 									<li
 										key={item._key}
 										className="flex items-center gap-3 px-3 py-2"

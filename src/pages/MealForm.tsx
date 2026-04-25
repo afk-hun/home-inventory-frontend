@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import ItemSearchPicker from "@/components/ItemSearchPicker";
 import {
 	Select,
 	SelectContent,
@@ -129,18 +130,15 @@ const MealForm = () => {
 					<div className="space-y-2">
 						<Label>Recipe</Label>
 						<div className="flex gap-2">
-							<Select value={recipeId} onValueChange={setRecipeId}>
-								<SelectTrigger className="flex-1">
-									<SelectValue placeholder="Select a recipe" />
-								</SelectTrigger>
-								<SelectContent>
-									{recipes.map((r) => (
-										<SelectItem key={r._id} value={r._id}>
-											{r.name}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
+							<ItemSearchPicker
+								items={recipes}
+								value={recipeId}
+								onValueChange={setRecipeId}
+								placeholder="Type to find a recipe..."
+								emptyMessage="No matching recipes found."
+								disabled={saving || deleting}
+								className="flex-1"
+							/>
 							<Button
 								variant="outline"
 								type="button"
